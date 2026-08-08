@@ -3,14 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[frb(json_serializable)]
-pub struct BaseResponse<T> {
-    pub code: i32,
-    pub msg: String,
-    pub data: T,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[frb(json_serializable)]
 pub struct HomeRecommendData {
     pub banners: Vec<BannerItem>,
     pub videos: Vec<HomeVideoSection>,
@@ -34,23 +26,19 @@ pub struct BannerItem {
 pub struct HomeVideoSection {
     pub id: i32,
     pub name: String,
-
     pub type_id: i32,
-
     pub has_more: bool,
     pub more_req_type: i32,
     pub more_text: String,
-
-    pub vlist: Vec<VodItem>,
+    pub vlist: Vec<RecommendVodItem>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[frb(json_serializable)]
-pub struct VodItem {
+pub struct RecommendVodItem {
     pub vod_id: i32,
     pub vod_name: String,
     pub vod_pic: String,
     pub vod_remarks: String,
-
     pub type_id: i32,
 }

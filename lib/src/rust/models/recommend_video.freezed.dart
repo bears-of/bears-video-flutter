@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
+// ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'recommend_video.dart';
@@ -9,7 +9,6 @@ part of 'recommend_video.dart';
 // FreezedGenerator
 // **************************************************************************
 
-// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -67,7 +66,7 @@ class _$BannerItemCopyWithImpl<$Res>
 /// Create a copy of BannerItem
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? content = null,Object? reqType = null,Object? reqContent = null,Object? realPackageId = null,}) {
-  return _then(BannerItem(
+  return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
@@ -339,7 +338,7 @@ class _$HomeRecommendDataCopyWithImpl<$Res>
 /// Create a copy of HomeRecommendData
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? banners = null,Object? videos = null,}) {
-  return _then(HomeRecommendData(
+  return _then(_self.copyWith(
 banners: null == banners ? _self.banners : banners // ignore: cast_nullable_to_non_nullable
 as List<BannerItem>,videos: null == videos ? _self.videos : videos // ignore: cast_nullable_to_non_nullable
 as List<HomeVideoSection>,
@@ -477,7 +476,7 @@ return $default(_that.banners,_that.videos);case _:
 @JsonSerializable()
 
 class _HomeRecommendData implements HomeRecommendData {
-  const _HomeRecommendData({required  List<BannerItem> banners, required  List<HomeVideoSection> videos}): _banners = banners,_videos = videos;
+  const _HomeRecommendData({required final  List<BannerItem> banners, required final  List<HomeVideoSection> videos}): _banners = banners,_videos = videos;
   factory _HomeRecommendData.fromJson(Map<String, dynamic> json) => _$HomeRecommendDataFromJson(json);
 
  final  List<BannerItem> _banners;
@@ -560,7 +559,7 @@ as List<HomeVideoSection>,
 /// @nodoc
 mixin _$HomeVideoSection {
 
- int get id; String get name; int get typeId; bool get hasMore; int get moreReqType; String get moreText; List<VodItem> get vlist;
+ int get id; String get name; int get typeId; bool get hasMore; int get moreReqType; String get moreText; List<RecommendVodItem> get vlist;
 /// Create a copy of HomeVideoSection
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -593,7 +592,7 @@ abstract mixin class $HomeVideoSectionCopyWith<$Res>  {
   factory $HomeVideoSectionCopyWith(HomeVideoSection value, $Res Function(HomeVideoSection) _then) = _$HomeVideoSectionCopyWithImpl;
 @useResult
 $Res call({
- int id, String name, int typeId, bool hasMore, int moreReqType, String moreText, List<VodItem> vlist
+ int id, String name, int typeId, bool hasMore, int moreReqType, String moreText, List<RecommendVodItem> vlist
 });
 
 
@@ -611,7 +610,7 @@ class _$HomeVideoSectionCopyWithImpl<$Res>
 /// Create a copy of HomeVideoSection
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? typeId = null,Object? hasMore = null,Object? moreReqType = null,Object? moreText = null,Object? vlist = null,}) {
-  return _then(HomeVideoSection(
+  return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,typeId: null == typeId ? _self.typeId : typeId // ignore: cast_nullable_to_non_nullable
@@ -619,7 +618,7 @@ as int,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullab
 as bool,moreReqType: null == moreReqType ? _self.moreReqType : moreReqType // ignore: cast_nullable_to_non_nullable
 as int,moreText: null == moreText ? _self.moreText : moreText // ignore: cast_nullable_to_non_nullable
 as String,vlist: null == vlist ? _self.vlist : vlist // ignore: cast_nullable_to_non_nullable
-as List<VodItem>,
+as List<RecommendVodItem>,
   ));
 }
 
@@ -701,7 +700,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String name,  int typeId,  bool hasMore,  int moreReqType,  String moreText,  List<VodItem> vlist)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String name,  int typeId,  bool hasMore,  int moreReqType,  String moreText,  List<RecommendVodItem> vlist)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HomeVideoSection() when $default != null:
 return $default(_that.id,_that.name,_that.typeId,_that.hasMore,_that.moreReqType,_that.moreText,_that.vlist);case _:
@@ -722,7 +721,7 @@ return $default(_that.id,_that.name,_that.typeId,_that.hasMore,_that.moreReqType
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String name,  int typeId,  bool hasMore,  int moreReqType,  String moreText,  List<VodItem> vlist)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String name,  int typeId,  bool hasMore,  int moreReqType,  String moreText,  List<RecommendVodItem> vlist)  $default,) {final _that = this;
 switch (_that) {
 case _HomeVideoSection():
 return $default(_that.id,_that.name,_that.typeId,_that.hasMore,_that.moreReqType,_that.moreText,_that.vlist);}
@@ -739,7 +738,7 @@ return $default(_that.id,_that.name,_that.typeId,_that.hasMore,_that.moreReqType
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String name,  int typeId,  bool hasMore,  int moreReqType,  String moreText,  List<VodItem> vlist)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String name,  int typeId,  bool hasMore,  int moreReqType,  String moreText,  List<RecommendVodItem> vlist)?  $default,) {final _that = this;
 switch (_that) {
 case _HomeVideoSection() when $default != null:
 return $default(_that.id,_that.name,_that.typeId,_that.hasMore,_that.moreReqType,_that.moreText,_that.vlist);case _:
@@ -754,7 +753,7 @@ return $default(_that.id,_that.name,_that.typeId,_that.hasMore,_that.moreReqType
 @JsonSerializable()
 
 class _HomeVideoSection implements HomeVideoSection {
-  const _HomeVideoSection({required this.id, required this.name, required this.typeId, required this.hasMore, required this.moreReqType, required this.moreText, required  List<VodItem> vlist}): _vlist = vlist;
+  const _HomeVideoSection({required this.id, required this.name, required this.typeId, required this.hasMore, required this.moreReqType, required this.moreText, required final  List<RecommendVodItem> vlist}): _vlist = vlist;
   factory _HomeVideoSection.fromJson(Map<String, dynamic> json) => _$HomeVideoSectionFromJson(json);
 
 @override final  int id;
@@ -763,8 +762,8 @@ class _HomeVideoSection implements HomeVideoSection {
 @override final  bool hasMore;
 @override final  int moreReqType;
 @override final  String moreText;
- final  List<VodItem> _vlist;
-@override List<VodItem> get vlist {
+ final  List<RecommendVodItem> _vlist;
+@override List<RecommendVodItem> get vlist {
   if (_vlist is EqualUnmodifiableListView) return _vlist;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_vlist);
@@ -804,7 +803,7 @@ abstract mixin class _$HomeVideoSectionCopyWith<$Res> implements $HomeVideoSecti
   factory _$HomeVideoSectionCopyWith(_HomeVideoSection value, $Res Function(_HomeVideoSection) _then) = __$HomeVideoSectionCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String name, int typeId, bool hasMore, int moreReqType, String moreText, List<VodItem> vlist
+ int id, String name, int typeId, bool hasMore, int moreReqType, String moreText, List<RecommendVodItem> vlist
 });
 
 
@@ -830,7 +829,7 @@ as int,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullab
 as bool,moreReqType: null == moreReqType ? _self.moreReqType : moreReqType // ignore: cast_nullable_to_non_nullable
 as int,moreText: null == moreText ? _self.moreText : moreText // ignore: cast_nullable_to_non_nullable
 as String,vlist: null == vlist ? _self._vlist : vlist // ignore: cast_nullable_to_non_nullable
-as List<VodItem>,
+as List<RecommendVodItem>,
   ));
 }
 
@@ -839,22 +838,22 @@ as List<VodItem>,
 
 
 /// @nodoc
-mixin _$VodItem {
+mixin _$RecommendVodItem {
 
  int get vodId; String get vodName; String get vodPic; String get vodRemarks; int get typeId;
-/// Create a copy of VodItem
+/// Create a copy of RecommendVodItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$VodItemCopyWith<VodItem> get copyWith => _$VodItemCopyWithImpl<VodItem>(this as VodItem, _$identity);
+$RecommendVodItemCopyWith<RecommendVodItem> get copyWith => _$RecommendVodItemCopyWithImpl<RecommendVodItem>(this as RecommendVodItem, _$identity);
 
-  /// Serializes this VodItem to a JSON map.
+  /// Serializes this RecommendVodItem to a JSON map.
   Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VodItem&&(identical(other.vodId, vodId) || other.vodId == vodId)&&(identical(other.vodName, vodName) || other.vodName == vodName)&&(identical(other.vodPic, vodPic) || other.vodPic == vodPic)&&(identical(other.vodRemarks, vodRemarks) || other.vodRemarks == vodRemarks)&&(identical(other.typeId, typeId) || other.typeId == typeId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecommendVodItem&&(identical(other.vodId, vodId) || other.vodId == vodId)&&(identical(other.vodName, vodName) || other.vodName == vodName)&&(identical(other.vodPic, vodPic) || other.vodPic == vodPic)&&(identical(other.vodRemarks, vodRemarks) || other.vodRemarks == vodRemarks)&&(identical(other.typeId, typeId) || other.typeId == typeId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -863,15 +862,15 @@ int get hashCode => Object.hash(runtimeType,vodId,vodName,vodPic,vodRemarks,type
 
 @override
 String toString() {
-  return 'VodItem(vodId: $vodId, vodName: $vodName, vodPic: $vodPic, vodRemarks: $vodRemarks, typeId: $typeId)';
+  return 'RecommendVodItem(vodId: $vodId, vodName: $vodName, vodPic: $vodPic, vodRemarks: $vodRemarks, typeId: $typeId)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $VodItemCopyWith<$Res>  {
-  factory $VodItemCopyWith(VodItem value, $Res Function(VodItem) _then) = _$VodItemCopyWithImpl;
+abstract mixin class $RecommendVodItemCopyWith<$Res>  {
+  factory $RecommendVodItemCopyWith(RecommendVodItem value, $Res Function(RecommendVodItem) _then) = _$RecommendVodItemCopyWithImpl;
 @useResult
 $Res call({
  int vodId, String vodName, String vodPic, String vodRemarks, int typeId
@@ -882,17 +881,17 @@ $Res call({
 
 }
 /// @nodoc
-class _$VodItemCopyWithImpl<$Res>
-    implements $VodItemCopyWith<$Res> {
-  _$VodItemCopyWithImpl(this._self, this._then);
+class _$RecommendVodItemCopyWithImpl<$Res>
+    implements $RecommendVodItemCopyWith<$Res> {
+  _$RecommendVodItemCopyWithImpl(this._self, this._then);
 
-  final VodItem _self;
-  final $Res Function(VodItem) _then;
+  final RecommendVodItem _self;
+  final $Res Function(RecommendVodItem) _then;
 
-/// Create a copy of VodItem
+/// Create a copy of RecommendVodItem
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? vodId = null,Object? vodName = null,Object? vodPic = null,Object? vodRemarks = null,Object? typeId = null,}) {
-  return _then(VodItem(
+  return _then(_self.copyWith(
 vodId: null == vodId ? _self.vodId : vodId // ignore: cast_nullable_to_non_nullable
 as int,vodName: null == vodName ? _self.vodName : vodName // ignore: cast_nullable_to_non_nullable
 as String,vodPic: null == vodPic ? _self.vodPic : vodPic // ignore: cast_nullable_to_non_nullable
@@ -905,8 +904,8 @@ as int,
 }
 
 
-/// Adds pattern-matching-related methods to [VodItem].
-extension VodItemPatterns on VodItem {
+/// Adds pattern-matching-related methods to [RecommendVodItem].
+extension RecommendVodItemPatterns on RecommendVodItem {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -919,10 +918,10 @@ extension VodItemPatterns on VodItem {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VodItem value)?  $default,{required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _RecommendVodItem value)?  $default,{required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _VodItem() when $default != null:
+case _RecommendVodItem() when $default != null:
 return $default(_that);case _:
   return orElse();
 
@@ -941,10 +940,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VodItem value)  $default,){
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _RecommendVodItem value)  $default,){
 final _that = this;
 switch (_that) {
-case _VodItem():
+case _RecommendVodItem():
 return $default(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -959,10 +958,10 @@ return $default(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VodItem value)?  $default,){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _RecommendVodItem value)?  $default,){
 final _that = this;
 switch (_that) {
-case _VodItem() when $default != null:
+case _RecommendVodItem() when $default != null:
 return $default(_that);case _:
   return null;
 
@@ -982,7 +981,7 @@ return $default(_that);case _:
 
 @optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int vodId,  String vodName,  String vodPic,  String vodRemarks,  int typeId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _VodItem() when $default != null:
+case _RecommendVodItem() when $default != null:
 return $default(_that.vodId,_that.vodName,_that.vodPic,_that.vodRemarks,_that.typeId);case _:
   return orElse();
 
@@ -1003,7 +1002,7 @@ return $default(_that.vodId,_that.vodName,_that.vodPic,_that.vodRemarks,_that.ty
 
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int vodId,  String vodName,  String vodPic,  String vodRemarks,  int typeId)  $default,) {final _that = this;
 switch (_that) {
-case _VodItem():
+case _RecommendVodItem():
 return $default(_that.vodId,_that.vodName,_that.vodPic,_that.vodRemarks,_that.typeId);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -1020,7 +1019,7 @@ return $default(_that.vodId,_that.vodName,_that.vodPic,_that.vodRemarks,_that.ty
 
 @optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int vodId,  String vodName,  String vodPic,  String vodRemarks,  int typeId)?  $default,) {final _that = this;
 switch (_that) {
-case _VodItem() when $default != null:
+case _RecommendVodItem() when $default != null:
 return $default(_that.vodId,_that.vodName,_that.vodPic,_that.vodRemarks,_that.typeId);case _:
   return null;
 
@@ -1032,9 +1031,9 @@ return $default(_that.vodId,_that.vodName,_that.vodPic,_that.vodRemarks,_that.ty
 /// @nodoc
 @JsonSerializable()
 
-class _VodItem implements VodItem {
-  const _VodItem({required this.vodId, required this.vodName, required this.vodPic, required this.vodRemarks, required this.typeId});
-  factory _VodItem.fromJson(Map<String, dynamic> json) => _$VodItemFromJson(json);
+class _RecommendVodItem implements RecommendVodItem {
+  const _RecommendVodItem({required this.vodId, required this.vodName, required this.vodPic, required this.vodRemarks, required this.typeId});
+  factory _RecommendVodItem.fromJson(Map<String, dynamic> json) => _$RecommendVodItemFromJson(json);
 
 @override final  int vodId;
 @override final  String vodName;
@@ -1042,20 +1041,20 @@ class _VodItem implements VodItem {
 @override final  String vodRemarks;
 @override final  int typeId;
 
-/// Create a copy of VodItem
+/// Create a copy of RecommendVodItem
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$VodItemCopyWith<_VodItem> get copyWith => __$VodItemCopyWithImpl<_VodItem>(this, _$identity);
+_$RecommendVodItemCopyWith<_RecommendVodItem> get copyWith => __$RecommendVodItemCopyWithImpl<_RecommendVodItem>(this, _$identity);
 
 @override
 Map<String, dynamic> toJson() {
-  return _$VodItemToJson(this, );
+  return _$RecommendVodItemToJson(this, );
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VodItem&&(identical(other.vodId, vodId) || other.vodId == vodId)&&(identical(other.vodName, vodName) || other.vodName == vodName)&&(identical(other.vodPic, vodPic) || other.vodPic == vodPic)&&(identical(other.vodRemarks, vodRemarks) || other.vodRemarks == vodRemarks)&&(identical(other.typeId, typeId) || other.typeId == typeId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecommendVodItem&&(identical(other.vodId, vodId) || other.vodId == vodId)&&(identical(other.vodName, vodName) || other.vodName == vodName)&&(identical(other.vodPic, vodPic) || other.vodPic == vodPic)&&(identical(other.vodRemarks, vodRemarks) || other.vodRemarks == vodRemarks)&&(identical(other.typeId, typeId) || other.typeId == typeId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1064,15 +1063,15 @@ int get hashCode => Object.hash(runtimeType,vodId,vodName,vodPic,vodRemarks,type
 
 @override
 String toString() {
-  return 'VodItem(vodId: $vodId, vodName: $vodName, vodPic: $vodPic, vodRemarks: $vodRemarks, typeId: $typeId)';
+  return 'RecommendVodItem(vodId: $vodId, vodName: $vodName, vodPic: $vodPic, vodRemarks: $vodRemarks, typeId: $typeId)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$VodItemCopyWith<$Res> implements $VodItemCopyWith<$Res> {
-  factory _$VodItemCopyWith(_VodItem value, $Res Function(_VodItem) _then) = __$VodItemCopyWithImpl;
+abstract mixin class _$RecommendVodItemCopyWith<$Res> implements $RecommendVodItemCopyWith<$Res> {
+  factory _$RecommendVodItemCopyWith(_RecommendVodItem value, $Res Function(_RecommendVodItem) _then) = __$RecommendVodItemCopyWithImpl;
 @override @useResult
 $Res call({
  int vodId, String vodName, String vodPic, String vodRemarks, int typeId
@@ -1083,17 +1082,17 @@ $Res call({
 
 }
 /// @nodoc
-class __$VodItemCopyWithImpl<$Res>
-    implements _$VodItemCopyWith<$Res> {
-  __$VodItemCopyWithImpl(this._self, this._then);
+class __$RecommendVodItemCopyWithImpl<$Res>
+    implements _$RecommendVodItemCopyWith<$Res> {
+  __$RecommendVodItemCopyWithImpl(this._self, this._then);
 
-  final _VodItem _self;
-  final $Res Function(_VodItem) _then;
+  final _RecommendVodItem _self;
+  final $Res Function(_RecommendVodItem) _then;
 
-/// Create a copy of VodItem
+/// Create a copy of RecommendVodItem
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? vodId = null,Object? vodName = null,Object? vodPic = null,Object? vodRemarks = null,Object? typeId = null,}) {
-  return _then(_VodItem(
+  return _then(_RecommendVodItem(
 vodId: null == vodId ? _self.vodId : vodId // ignore: cast_nullable_to_non_nullable
 as int,vodName: null == vodName ? _self.vodName : vodName // ignore: cast_nullable_to_non_nullable
 as String,vodPic: null == vodPic ? _self.vodPic : vodPic // ignore: cast_nullable_to_non_nullable

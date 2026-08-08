@@ -6,34 +6,23 @@
 import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+class CryptoService {
+  final String buildTime;
+  final String pkId;
 
-            
+  const CryptoService({required this.buildTime, required this.pkId});
 
-            
+  static Future<void> responseMagic() =>
+      RustLib.instance.api.crateCryptoCryptoServiceResponseMagic();
 
-            class CryptoService  {
-                final String buildTime;
-final String pkId;
+  @override
+  int get hashCode => buildTime.hashCode ^ pkId.hashCode;
 
-                const CryptoService({required this.buildTime ,required this.pkId ,});
-
-                static Future<void>  responseMagic()=>RustLib.instance.api.crateCryptoCryptoServiceResponseMagic();
-
-
-                
-
-                
-        @override
-        int get hashCode => buildTime.hashCode^pkId.hashCode;
-        
-
-                
-        @override
-        bool operator ==(Object other) =>
-            identical(this, other) ||
-            other is CryptoService &&
-                runtimeType == other.runtimeType
-                && buildTime == other.buildTime&& pkId == other.pkId;
-        
-            }
-            
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CryptoService &&
+          runtimeType == other.runtimeType &&
+          buildTime == other.buildTime &&
+          pkId == other.pkId;
+}

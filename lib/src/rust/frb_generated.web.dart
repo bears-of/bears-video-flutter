@@ -3,199 +3,776 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
-
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
 import 'api/bears_api.dart';
+import 'api/database.dart';
 import 'api/simple.dart';
+import 'api/video_parse_api.dart';
 import 'crypto.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
+import 'models/danmaku_item.dart';
+import 'models/episode.dart';
 import 'models/recommend_video.dart';
+import 'models/search_result.dart';
+import 'models/video_detail.dart';
+import 'models/video_list.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 
+abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
+  RustLibApiImplPlatform({
+    required super.handler,
+    required super.wire,
+    required super.generalizedFrbRustBinding,
+    required super.portManager,
+  });
 
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_ApiServicePtr => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService;
 
+  @protected
+  AnyhowException dco_decode_AnyhowException(dynamic raw);
 
-                abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
-                  RustLibApiImplPlatform({
-                    required super.handler,
-                    required super.wire,
-                    required super.generalizedFrbRustBinding,
-                    required super.portManager,
-                  });
+  @protected
+  ApiService
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    dynamic raw,
+  );
 
-                  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_ApiServicePtr => wire.rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService;
+  @protected
+  ApiService
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    dynamic raw,
+  );
 
-CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_ValuePtr => wire.rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue;
+  @protected
+  Map<String, String> dco_decode_Map_String_String_None(dynamic raw);
 
+  @protected
+  ApiService
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    dynamic raw,
+  );
 
+  @protected
+  String dco_decode_String(dynamic raw);
 
-                  @protected AnyhowException dco_decode_AnyhowException(dynamic raw);
+  @protected
+  BackendVideoDetail dco_decode_backend_video_detail(dynamic raw);
 
-@protected ApiService dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(dynamic raw);
+  @protected
+  BannerItem dco_decode_banner_item(dynamic raw);
 
-@protected Value dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(dynamic raw);
+  @protected
+  bool dco_decode_bool(dynamic raw);
 
-@protected ApiService dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(dynamic raw);
+  @protected
+  EpisodeDownloadRecord dco_decode_box_autoadd_episode_download_record(
+    dynamic raw,
+  );
 
-@protected ApiService dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(dynamic raw);
+  @protected
+  EpisodeHistoryRecord dco_decode_box_autoadd_episode_history_record(
+    dynamic raw,
+  );
 
-@protected Value dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(dynamic raw);
+  @protected
+  SearchRequest dco_decode_box_autoadd_search_request(dynamic raw);
 
-@protected String dco_decode_String(dynamic raw);
+  @protected
+  BigInt dco_decode_box_autoadd_usize(dynamic raw);
 
-@protected BannerItem dco_decode_banner_item(dynamic raw);
+  @protected
+  VideoListRequest dco_decode_box_autoadd_video_list_request(dynamic raw);
 
-@protected bool dco_decode_bool(dynamic raw);
+  @protected
+  CryptoService dco_decode_crypto_service(dynamic raw);
 
-@protected CryptoService dco_decode_crypto_service(dynamic raw);
+  @protected
+  DanmakuItem dco_decode_danmaku_item(dynamic raw);
 
-@protected HomeRecommendData dco_decode_home_recommend_data(dynamic raw);
+  @protected
+  Episode dco_decode_episode(dynamic raw);
 
-@protected HomeVideoSection dco_decode_home_video_section(dynamic raw);
+  @protected
+  EpisodeDownloadRecord dco_decode_episode_download_record(dynamic raw);
 
-@protected int dco_decode_i_32(dynamic raw);
+  @protected
+  EpisodeHistoryRecord dco_decode_episode_history_record(dynamic raw);
 
-@protected PlatformInt64 dco_decode_i_64(dynamic raw);
+  @protected
+  FavoriteRecord dco_decode_favorite_record(dynamic raw);
 
-@protected List<BannerItem> dco_decode_list_banner_item(dynamic raw);
+  @protected
+  FrontendVideoDetail dco_decode_frontend_video_detail(dynamic raw);
 
-@protected List<HomeVideoSection> dco_decode_list_home_video_section(dynamic raw);
+  @protected
+  HomeRecommendData dco_decode_home_recommend_data(dynamic raw);
 
-@protected Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+  @protected
+  HomeVideoSection dco_decode_home_video_section(dynamic raw);
 
-@protected List<VodItem> dco_decode_list_vod_item(dynamic raw);
+  @protected
+  int dco_decode_i_32(dynamic raw);
 
-@protected String? dco_decode_opt_String(dynamic raw);
+  @protected
+  PlatformInt64 dco_decode_i_64(dynamic raw);
 
-@protected int dco_decode_u_8(dynamic raw);
+  @protected
+  List<String> dco_decode_list_String(dynamic raw);
 
-@protected void dco_decode_unit(dynamic raw);
+  @protected
+  List<BannerItem> dco_decode_list_banner_item(dynamic raw);
 
-@protected BigInt dco_decode_usize(dynamic raw);
+  @protected
+  List<DanmakuItem> dco_decode_list_danmaku_item(dynamic raw);
 
-@protected VodItem dco_decode_vod_item(dynamic raw);
+  @protected
+  List<Episode> dco_decode_list_episode(dynamic raw);
 
-@protected AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
+  @protected
+  List<EpisodeDownloadRecord> dco_decode_list_episode_download_record(
+    dynamic raw,
+  );
 
-@protected ApiService sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(SseDeserializer deserializer);
+  @protected
+  List<EpisodeHistoryRecord> dco_decode_list_episode_history_record(
+    dynamic raw,
+  );
 
-@protected Value sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(SseDeserializer deserializer);
+  @protected
+  List<FavoriteRecord> dco_decode_list_favorite_record(dynamic raw);
 
-@protected ApiService sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(SseDeserializer deserializer);
+  @protected
+  List<HomeVideoSection> dco_decode_list_home_video_section(dynamic raw);
 
-@protected ApiService sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(SseDeserializer deserializer);
+  @protected
+  List<PlaySource> dco_decode_list_play_source(dynamic raw);
 
-@protected Value sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(SseDeserializer deserializer);
+  @protected
+  Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
-@protected String sse_decode_String(SseDeserializer deserializer);
+  @protected
+  List<RecommendVodItem> dco_decode_list_recommend_vod_item(dynamic raw);
 
-@protected BannerItem sse_decode_banner_item(SseDeserializer deserializer);
+  @protected
+  List<(String, String)> dco_decode_list_record_string_string(dynamic raw);
 
-@protected bool sse_decode_bool(SseDeserializer deserializer);
+  @protected
+  List<SearchVodItem> dco_decode_list_search_vod_item(dynamic raw);
 
-@protected CryptoService sse_decode_crypto_service(SseDeserializer deserializer);
+  @protected
+  List<VodListItem> dco_decode_list_vod_list_item(dynamic raw);
 
-@protected HomeRecommendData sse_decode_home_recommend_data(SseDeserializer deserializer);
+  @protected
+  List<VodPlayer> dco_decode_list_vod_player(dynamic raw);
 
-@protected HomeVideoSection sse_decode_home_video_section(SseDeserializer deserializer);
+  @protected
+  String? dco_decode_opt_String(dynamic raw);
 
-@protected int sse_decode_i_32(SseDeserializer deserializer);
+  @protected
+  EpisodeDownloadRecord? dco_decode_opt_box_autoadd_episode_download_record(
+    dynamic raw,
+  );
 
-@protected PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
+  @protected
+  EpisodeHistoryRecord? dco_decode_opt_box_autoadd_episode_history_record(
+    dynamic raw,
+  );
 
-@protected List<BannerItem> sse_decode_list_banner_item(SseDeserializer deserializer);
+  @protected
+  BigInt? dco_decode_opt_box_autoadd_usize(dynamic raw);
 
-@protected List<HomeVideoSection> sse_decode_list_home_video_section(SseDeserializer deserializer);
+  @protected
+  List<VodPlayer>? dco_decode_opt_list_vod_player(dynamic raw);
 
-@protected Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+  @protected
+  ParseVideoResult dco_decode_parse_video_result(dynamic raw);
 
-@protected List<VodItem> sse_decode_list_vod_item(SseDeserializer deserializer);
+  @protected
+  PlaySource dco_decode_play_source(dynamic raw);
 
-@protected String? sse_decode_opt_String(SseDeserializer deserializer);
+  @protected
+  RecommendVodItem dco_decode_recommend_vod_item(dynamic raw);
 
-@protected int sse_decode_u_8(SseDeserializer deserializer);
+  @protected
+  (String, String) dco_decode_record_string_string(dynamic raw);
 
-@protected void sse_decode_unit(SseDeserializer deserializer);
+  @protected
+  SearchRequest dco_decode_search_request(dynamic raw);
 
-@protected BigInt sse_decode_usize(SseDeserializer deserializer);
+  @protected
+  SearchVodItem dco_decode_search_vod_item(dynamic raw);
 
-@protected VodItem sse_decode_vod_item(SseDeserializer deserializer);
+  @protected
+  int dco_decode_u_8(dynamic raw);
 
-@protected void sse_encode_AnyhowException(AnyhowException self, SseSerializer serializer);
+  @protected
+  void dco_decode_unit(dynamic raw);
 
-@protected void sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(ApiService self, SseSerializer serializer);
+  @protected
+  BigInt dco_decode_usize(dynamic raw);
 
-@protected void sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(Value self, SseSerializer serializer);
+  @protected
+  VideoListRequest dco_decode_video_list_request(dynamic raw);
 
-@protected void sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(ApiService self, SseSerializer serializer);
+  @protected
+  VodInfo dco_decode_vod_info(dynamic raw);
 
-@protected void sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(ApiService self, SseSerializer serializer);
+  @protected
+  VodListItem dco_decode_vod_list_item(dynamic raw);
 
-@protected void sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(Value self, SseSerializer serializer);
+  @protected
+  VodPlayer dco_decode_vod_player(dynamic raw);
 
-@protected void sse_encode_String(String self, SseSerializer serializer);
+  @protected
+  AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
 
-@protected void sse_encode_banner_item(BannerItem self, SseSerializer serializer);
+  @protected
+  ApiService
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    SseDeserializer deserializer,
+  );
 
-@protected void sse_encode_bool(bool self, SseSerializer serializer);
+  @protected
+  ApiService
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    SseDeserializer deserializer,
+  );
 
-@protected void sse_encode_crypto_service(CryptoService self, SseSerializer serializer);
+  @protected
+  Map<String, String> sse_decode_Map_String_String_None(
+    SseDeserializer deserializer,
+  );
 
-@protected void sse_encode_home_recommend_data(HomeRecommendData self, SseSerializer serializer);
+  @protected
+  ApiService
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    SseDeserializer deserializer,
+  );
 
-@protected void sse_encode_home_video_section(HomeVideoSection self, SseSerializer serializer);
+  @protected
+  String sse_decode_String(SseDeserializer deserializer);
 
-@protected void sse_encode_i_32(int self, SseSerializer serializer);
+  @protected
+  BackendVideoDetail sse_decode_backend_video_detail(
+    SseDeserializer deserializer,
+  );
 
-@protected void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
+  @protected
+  BannerItem sse_decode_banner_item(SseDeserializer deserializer);
 
-@protected void sse_encode_list_banner_item(List<BannerItem> self, SseSerializer serializer);
+  @protected
+  bool sse_decode_bool(SseDeserializer deserializer);
 
-@protected void sse_encode_list_home_video_section(List<HomeVideoSection> self, SseSerializer serializer);
+  @protected
+  EpisodeDownloadRecord sse_decode_box_autoadd_episode_download_record(
+    SseDeserializer deserializer,
+  );
 
-@protected void sse_encode_list_prim_u_8_strict(Uint8List self, SseSerializer serializer);
+  @protected
+  EpisodeHistoryRecord sse_decode_box_autoadd_episode_history_record(
+    SseDeserializer deserializer,
+  );
 
-@protected void sse_encode_list_vod_item(List<VodItem> self, SseSerializer serializer);
+  @protected
+  SearchRequest sse_decode_box_autoadd_search_request(
+    SseDeserializer deserializer,
+  );
 
-@protected void sse_encode_opt_String(String? self, SseSerializer serializer);
+  @protected
+  BigInt sse_decode_box_autoadd_usize(SseDeserializer deserializer);
 
-@protected void sse_encode_u_8(int self, SseSerializer serializer);
+  @protected
+  VideoListRequest sse_decode_box_autoadd_video_list_request(
+    SseDeserializer deserializer,
+  );
 
-@protected void sse_encode_unit(void self, SseSerializer serializer);
+  @protected
+  CryptoService sse_decode_crypto_service(SseDeserializer deserializer);
 
-@protected void sse_encode_usize(BigInt self, SseSerializer serializer);
+  @protected
+  DanmakuItem sse_decode_danmaku_item(SseDeserializer deserializer);
 
-@protected void sse_encode_vod_item(VodItem self, SseSerializer serializer);
-                }
-                
+  @protected
+  Episode sse_decode_episode(SseDeserializer deserializer);
 
+  @protected
+  EpisodeDownloadRecord sse_decode_episode_download_record(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EpisodeHistoryRecord sse_decode_episode_history_record(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  FavoriteRecord sse_decode_favorite_record(SseDeserializer deserializer);
+
+  @protected
+  FrontendVideoDetail sse_decode_frontend_video_detail(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  HomeRecommendData sse_decode_home_recommend_data(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  HomeVideoSection sse_decode_home_video_section(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer);
+
+  @protected
+  PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
+  List<BannerItem> sse_decode_list_banner_item(SseDeserializer deserializer);
+
+  @protected
+  List<DanmakuItem> sse_decode_list_danmaku_item(SseDeserializer deserializer);
+
+  @protected
+  List<Episode> sse_decode_list_episode(SseDeserializer deserializer);
+
+  @protected
+  List<EpisodeDownloadRecord> sse_decode_list_episode_download_record(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<EpisodeHistoryRecord> sse_decode_list_episode_history_record(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<FavoriteRecord> sse_decode_list_favorite_record(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<HomeVideoSection> sse_decode_list_home_video_section(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<PlaySource> sse_decode_list_play_source(SseDeserializer deserializer);
+
+  @protected
+  Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<RecommendVodItem> sse_decode_list_recommend_vod_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<(String, String)> sse_decode_list_record_string_string(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<SearchVodItem> sse_decode_list_search_vod_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<VodListItem> sse_decode_list_vod_list_item(SseDeserializer deserializer);
+
+  @protected
+  List<VodPlayer> sse_decode_list_vod_player(SseDeserializer deserializer);
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  EpisodeDownloadRecord? sse_decode_opt_box_autoadd_episode_download_record(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EpisodeHistoryRecord? sse_decode_opt_box_autoadd_episode_history_record(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  BigInt? sse_decode_opt_box_autoadd_usize(SseDeserializer deserializer);
+
+  @protected
+  List<VodPlayer>? sse_decode_opt_list_vod_player(SseDeserializer deserializer);
+
+  @protected
+  ParseVideoResult sse_decode_parse_video_result(SseDeserializer deserializer);
+
+  @protected
+  PlaySource sse_decode_play_source(SseDeserializer deserializer);
+
+  @protected
+  RecommendVodItem sse_decode_recommend_vod_item(SseDeserializer deserializer);
+
+  @protected
+  (String, String) sse_decode_record_string_string(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SearchRequest sse_decode_search_request(SseDeserializer deserializer);
+
+  @protected
+  SearchVodItem sse_decode_search_vod_item(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_u_8(SseDeserializer deserializer);
+
+  @protected
+  void sse_decode_unit(SseDeserializer deserializer);
+
+  @protected
+  BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  VideoListRequest sse_decode_video_list_request(SseDeserializer deserializer);
+
+  @protected
+  VodInfo sse_decode_vod_info(SseDeserializer deserializer);
+
+  @protected
+  VodListItem sse_decode_vod_list_item(SseDeserializer deserializer);
+
+  @protected
+  VodPlayer sse_decode_vod_player(SseDeserializer deserializer);
+
+  @protected
+  void sse_encode_AnyhowException(
+    AnyhowException self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    ApiService self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    ApiService self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_Map_String_String_None(
+    Map<String, String> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    ApiService self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_String(String self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_backend_video_detail(
+    BackendVideoDetail self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_banner_item(BannerItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_episode_download_record(
+    EpisodeDownloadRecord self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_episode_history_record(
+    EpisodeHistoryRecord self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_search_request(
+    SearchRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_video_list_request(
+    VideoListRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_crypto_service(CryptoService self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_danmaku_item(DanmakuItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_episode(Episode self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_episode_download_record(
+    EpisodeDownloadRecord self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_episode_history_record(
+    EpisodeHistoryRecord self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_favorite_record(
+    FavoriteRecord self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_frontend_video_detail(
+    FrontendVideoDetail self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_home_recommend_data(
+    HomeRecommendData self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_home_video_section(
+    HomeVideoSection self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_banner_item(
+    List<BannerItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_danmaku_item(
+    List<DanmakuItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_episode(List<Episode> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_episode_download_record(
+    List<EpisodeDownloadRecord> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_episode_history_record(
+    List<EpisodeHistoryRecord> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_favorite_record(
+    List<FavoriteRecord> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_home_video_section(
+    List<HomeVideoSection> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_play_source(
+    List<PlaySource> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_u_8_strict(
+    Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_recommend_vod_item(
+    List<RecommendVodItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_record_string_string(
+    List<(String, String)> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_search_vod_item(
+    List<SearchVodItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_vod_list_item(
+    List<VodListItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_vod_player(
+    List<VodPlayer> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_episode_download_record(
+    EpisodeDownloadRecord? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_episode_history_record(
+    EpisodeHistoryRecord? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_usize(BigInt? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_list_vod_player(
+    List<VodPlayer>? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_parse_video_result(
+    ParseVideoResult self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_play_source(PlaySource self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_recommend_vod_item(
+    RecommendVodItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_record_string_string(
+    (String, String) self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_search_request(SearchRequest self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_search_vod_item(SearchVodItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_8(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_unit(void self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_video_list_request(
+    VideoListRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_vod_info(VodInfo self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_vod_list_item(VodListItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_vod_player(VodPlayer self, SseSerializer serializer);
+}
 
 // Section: wire_class
 
 class RustLibWire implements BaseWire {
-            RustLibWire.fromExternalLibrary(ExternalLibrary lib);
+  RustLibWire.fromExternalLibrary(ExternalLibrary lib);
 
-            void rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(int ptr) => wasmModule.rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(ptr);
+  void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+        ptr,
+      );
 
-void rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(int ptr) => wasmModule.rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(ptr);
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+        ptr,
+      );
+}
 
-void rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(int ptr) => wasmModule.rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(ptr);
+@JS('wasm_bindgen')
+external RustLibWasmModule get wasmModule;
 
-void rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(int ptr) => wasmModule.rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(ptr);
-        }
-        @JS('wasm_bindgen') external RustLibWasmModule get wasmModule;
+@JS()
+@anonymous
+extension type RustLibWasmModule._(JSObject _) implements JSObject {
+  external void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    int ptr,
+  );
 
-        @JS() @anonymous extension type RustLibWasmModule._(JSObject _) implements JSObject {
-            external void rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(int ptr);
-
-external void rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(int ptr);
-
-external void rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(int ptr);
-
-external void rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(int ptr);
-        }
-        
+  external void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+    int ptr,
+  );
+}

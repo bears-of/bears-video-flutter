@@ -47,7 +47,7 @@ _HomeVideoSection _$HomeVideoSectionFromJson(Map<String, dynamic> json) =>
       moreReqType: (json['moreReqType'] as num).toInt(),
       moreText: json['moreText'] as String,
       vlist: (json['vlist'] as List<dynamic>)
-          .map((e) => VodItem.fromJson(e as Map<String, dynamic>))
+          .map((e) => RecommendVodItem.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
 
@@ -62,18 +62,20 @@ Map<String, dynamic> _$HomeVideoSectionToJson(_HomeVideoSection instance) =>
       'vlist': instance.vlist,
     };
 
-_VodItem _$VodItemFromJson(Map<String, dynamic> json) => _VodItem(
-  vodId: (json['vodId'] as num).toInt(),
-  vodName: json['vodName'] as String,
-  vodPic: json['vodPic'] as String,
-  vodRemarks: json['vodRemarks'] as String,
-  typeId: (json['typeId'] as num).toInt(),
-);
+_RecommendVodItem _$RecommendVodItemFromJson(Map<String, dynamic> json) =>
+    _RecommendVodItem(
+      vodId: (json['vodId'] as num).toInt(),
+      vodName: json['vodName'] as String,
+      vodPic: json['vodPic'] as String,
+      vodRemarks: json['vodRemarks'] as String,
+      typeId: (json['typeId'] as num).toInt(),
+    );
 
-Map<String, dynamic> _$VodItemToJson(_VodItem instance) => <String, dynamic>{
-  'vodId': instance.vodId,
-  'vodName': instance.vodName,
-  'vodPic': instance.vodPic,
-  'vodRemarks': instance.vodRemarks,
-  'typeId': instance.typeId,
-};
+Map<String, dynamic> _$RecommendVodItemToJson(_RecommendVodItem instance) =>
+    <String, dynamic>{
+      'vodId': instance.vodId,
+      'vodName': instance.vodName,
+      'vodPic': instance.vodPic,
+      'vodRemarks': instance.vodRemarks,
+      'typeId': instance.typeId,
+    };

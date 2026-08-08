@@ -13,12 +13,23 @@ serde_json = "1"
 aes = "0.8"
 cbc = "0.1"
 rand = "0.10.1"
-tokio = { version = "1.52.3", features = ["io-util", "sync", "net"] }
-reqwest = {version = "0.13.4",features = ["json", "gzip", "brotli", "charset"]}
+reqwest = { version = "0.13.4", default-features = false, features = ["native-tls-vendored", "json", "gzip", "brotli", "charset"] }
 base64 = "0.22.1"
 md5 = "0.8.0"
 regex = "1.12.4"
 anyhow = "1.0.103"
+tokio = {version = "1.52.3",features = ["io-util", "sync", "net","macros"]}
+rusqlite = { version = "0.37.0", features = ["bundled"] }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+
+[profile.dev]
+incremental = true # 以较小的步骤编译您的二进制文件。
+
+[profile.release]
+codegen-units = 1 # 允许 LLVM 执行更好的优化。
+lto = true # 启用链接时优化。
+opt-level = "s" # 优先考虑小的二进制文件大小。如果您更喜欢速度，请使用 `3`。
+panic = "abort" # 通过禁用 panic 处理程序来提高性能。
+strip = true # 确保移除调试符号。

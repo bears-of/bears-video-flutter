@@ -1,27 +1,23 @@
 import 'package:flutter/material.dart';
 
-abstract class AppColors {
-  static const bg = Color(0xFF0B0B0F);
-  static const surface = Color(0xFF16161C);
-  static const surface2 = Color(0xFF20212A);
-  static const textPrimary = Color(0xFFFFFFFF);
-  static const textSecondary = Color(0xFFA7A7B2);
-  static const textTertiary = Color(0xFF6E6E78);
-  static const hairline = Color(0x14FFFFFF);
-  static const accent = Color(0xFFFF4D57); // coral-red signature
-  static const accentSoft = Color(0x26FF4D57); // accent @ ~15% for tints/chips
+class AppColors {
+  const AppColors._();
 
-  static const scrim = LinearGradient(
-    begin: Alignment.bottomCenter,
-    end: Alignment.topCenter,
-    colors: [Color(0xF20B0B0F), Color(0x000B0B0F)],
-    stops: [0.0, 0.65],
-  );
-
-  static const topScrim = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0x990B0B0F), Color(0x000B0B0F)],
-    stops: [0.0, 0.5],
-  );
+  /// A quiet cyan canvas that stays comfortable during long browsing sessions.
+  static const Color background = Color(0xFFEDF9F8);
+  static const Color surface = Color(0xFFF9FFFF);
+  static const Color surfaceMuted = Color(0xFFDCEFED);
+  static const Color surfacePressed = Color(0xFFCBE7E4);
+  static const Color ink = Color(0xFF173331);
+  static const Color inkMuted = Color(0xFF607D7A);
+  static const Color primary = Color(0xFF168C84);
+  static const Color primaryPressed = Color(0xFF0F706A);
+  static const Color primaryDark = primaryPressed;
+  static const Color primarySoft = Color(0xFFD2EEEB);
+  static const Color danger = Color(0xFFC64B51);
+  static const Color dangerPressed = Color(0xFFA63A40);
+  static const Color accent = Color(0xFFFFB545);
+  static const Color outline = Color(0xFFBBD9D6);
+  static const Color focus = Color(0xFF38A79F);
+  static const Color overlay = Color(0x7A102B29);
 }

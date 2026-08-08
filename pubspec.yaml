@@ -1,5 +1,5 @@
 name: bears_video
-description: "A new Flutter project."
+description: "Bears video browsing and playback application."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -40,11 +40,24 @@ dependencies:
   get_it: ^9.2.1
   equatable: ^2.0.8
   meta: ^1.18.0
+  media_kit: ^1.2.6 # Primary package.
+  media_kit_video: ^2.0.1 # For video rendering.
+  media_kit_libs_video: ^1.0.7 # Native video dependencies.
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
-  logger: ^2.7.0
   hooks_riverpod: ^2.6.1
   flutter_hooks: ^0.21.3+1
+  battery_plus: ^7.1.0
+  screen_brightness: ^2.1.11
+  volume_controller: ^3.6.0
+  flutter_svg: ^2.3.0
+  cached_network_image: ^3.4.1
+  expandable_text: ^2.3.0
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  internet_connection_checker_plus: ^3.1.1
+  wakelock_plus: ^1.6.1
+  window_manager: ^0.5.2
 
 dev_dependencies:
   flutter_test:
@@ -58,7 +71,7 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   json_serializable: ^6.14.0
-  freezed: ^4.0.0-dev.3
+  freezed: ^3.2.5
   build_runner: ^2.15.0
 
 # For information on the generic Dart part of this file, see the
@@ -103,6 +116,17 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
   fonts:
-    - family: Inter
+    - family: MiSans
       fonts:
-        - asset: assets/fonts/Inter.ttf
+        - asset: assets/fonts/MiSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/MiSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/MiSans-Semibold.ttf
+          weight: 600
+        - asset: assets/fonts/MiSans-Bold.ttf
+          weight: 700
+  assets:
+    - assets/images/empty_download.png
+    - assets/images/empty_history.png
+    - assets/images/empty_favorite.png

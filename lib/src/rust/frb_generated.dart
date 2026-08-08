@@ -4,14 +4,21 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/bears_api.dart';
+import 'api/database.dart';
 import 'api/simple.dart';
+import 'api/video_parse_api.dart';
 import 'crypto.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
 import 'frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
+import 'models/danmaku_item.dart';
+import 'models/episode.dart';
 import 'models/recommend_video.dart';
+import 'models/search_result.dart';
+import 'models/video_detail.dart';
+import 'models/video_list.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 /// Main entrypoint of the Rust API
@@ -69,7 +76,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 690607456;
+  int get rustContentHash => 621401002;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -81,30 +88,35 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<Value> crateApiBearsApiApiServiceFetchDanmakuList({
+  Future<List<DanmakuItem>> crateApiBearsApiApiServiceFetchDanmakuList({
     required ApiService that,
     required String groupKey,
   });
 
-  Future<Value> crateApiBearsApiApiServiceFetchDanmakuListByIds({
+  Future<List<DanmakuItem>> crateApiBearsApiApiServiceFetchDanmakuListByIds({
     required ApiService that,
     required PlatformInt64 vodId,
-    required PlatformInt64 groupId,
+    required PlatformInt64 currentEpisode,
   });
 
   Future<HomeRecommendData> crateApiBearsApiApiServiceFetchHomeRecommend({
     required ApiService that,
   });
 
-  Future<Value> crateApiBearsApiApiServiceFetchVideoDetail({
+  Future<String> crateApiBearsApiApiServiceFetchSpecifiedVideoUrl({
+    required ApiService that,
+    required String resolveUrl,
+    required Map<String, String> headers,
+  });
+
+  Future<FrontendVideoDetail> crateApiBearsApiApiServiceFetchVideoDetail({
     required ApiService that,
     required int videoId,
   });
 
-  Future<Value> crateApiBearsApiApiServiceFetchVideoList({
+  Future<List<VodListItem>> crateApiBearsApiApiServiceFetchVideoList({
     required ApiService that,
-    required int tid,
-    required int page,
+    required VideoListRequest req,
   });
 
   Future<ApiService> crateApiBearsApiApiServiceNew();
@@ -115,17 +127,103 @@ abstract class RustLibApi extends BaseApi {
     required String code,
   });
 
-  Future<Value> crateApiBearsApiApiServiceSearch({
+  Future<List<SearchVodItem>> crateApiBearsApiApiServiceSearch({
     required ApiService that,
-    required String keyword,
-    required int page,
+    required SearchRequest req,
   });
 
   Future<void> crateCryptoCryptoServiceResponseMagic();
 
+  Future<void> crateApiDatabaseEpisodeDownloadDelete({
+    required PlatformInt64 videoId,
+    required String sourceName,
+    required int episodeIndex,
+  });
+
+  Future<EpisodeDownloadRecord?> crateApiDatabaseEpisodeDownloadGet({
+    required PlatformInt64 videoId,
+    required String sourceName,
+    required int episodeIndex,
+  });
+
+  Future<List<EpisodeDownloadRecord>> crateApiDatabaseEpisodeDownloadGetAll();
+
+  Future<List<EpisodeDownloadRecord>>
+  crateApiDatabaseEpisodeDownloadGetForVideo({required PlatformInt64 videoId});
+
+  Future<void> crateApiDatabaseEpisodeDownloadSave({
+    required EpisodeDownloadRecord record,
+  });
+
+  Future<void> crateApiDatabaseEpisodeHistoryClear();
+
+  Future<EpisodeHistoryRecord?> crateApiDatabaseEpisodeHistoryGet({
+    required PlatformInt64 videoId,
+  });
+
+  Future<List<EpisodeHistoryRecord>> crateApiDatabaseEpisodeHistoryGetAll();
+
+  Future<void> crateApiDatabaseEpisodeHistorySaveMetadata({
+    required PlatformInt64 videoId,
+    required int sourceIndex,
+    required int episodeIndex,
+    required String videoTitle,
+    required String videoPoster,
+    required String videoDetailJson,
+    required String sourceName,
+    required String episodeLabel,
+  });
+
+  Future<void> crateApiDatabaseEpisodeHistorySaveProgress({
+    required PlatformInt64 videoId,
+    required int sourceIndex,
+    required int episodeIndex,
+    required PlatformInt64 watchedPositionMs,
+    required PlatformInt64 totalDurationMs,
+  });
+
+  Future<void> crateApiDatabaseEpisodeHistorySaveSelection({
+    required PlatformInt64 videoId,
+    required int sourceIndex,
+    required int episodeIndex,
+  });
+
+  Future<List<FavoriteRecord>> crateApiDatabaseFavoriteGetAll();
+
+  Future<String?> crateApiDatabaseFavoriteGetDetailJson({
+    required PlatformInt64 videoId,
+  });
+
+  Future<bool> crateApiDatabaseFavoriteIsSaved({
+    required PlatformInt64 videoId,
+  });
+
+  Future<void> crateApiDatabaseFavoriteRemove({required PlatformInt64 videoId});
+
+  Future<void> crateApiDatabaseFavoriteSave({
+    required PlatformInt64 videoId,
+    required String videoTitle,
+    required String videoPoster,
+    required String videoDetailJson,
+  });
+
   String crateApiSimpleGreet({required String name});
 
   Future<void> crateApiSimpleInitApp();
+
+  Future<void> crateApiDatabaseInitializeDatabase({required String directory});
+
+  Future<ParseVideoResult> crateApiVideoParseApiParseVideoUrl({
+    required String jsonText,
+  });
+
+  Future<void> crateApiDatabaseSearchHistoryClear();
+
+  Future<List<String>> crateApiDatabaseSearchHistoryGetRecent({
+    required int limit,
+  });
+
+  Future<void> crateApiDatabaseSearchHistorySave({required String keyword});
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_ApiService;
@@ -134,12 +232,6 @@ abstract class RustLibApi extends BaseApi {
   get rust_arc_decrement_strong_count_ApiService;
 
   CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_ApiServicePtr;
-
-  RustArcIncrementStrongCountFnType get rust_arc_increment_strong_count_Value;
-
-  RustArcDecrementStrongCountFnType get rust_arc_decrement_strong_count_Value;
-
-  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_ValuePtr;
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -151,7 +243,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<Value> crateApiBearsApiApiServiceFetchDanmakuList({
+  Future<List<DanmakuItem>> crateApiBearsApiApiServiceFetchDanmakuList({
     required ApiService that,
     required String groupKey,
   }) {
@@ -172,8 +264,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+          decodeSuccessData: sse_decode_list_danmaku_item,
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiBearsApiApiServiceFetchDanmakuListConstMeta,
@@ -190,10 +281,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<Value> crateApiBearsApiApiServiceFetchDanmakuListByIds({
+  Future<List<DanmakuItem>> crateApiBearsApiApiServiceFetchDanmakuListByIds({
     required ApiService that,
     required PlatformInt64 vodId,
-    required PlatformInt64 groupId,
+    required PlatformInt64 currentEpisode,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -204,7 +295,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_i_64(vodId, serializer);
-          sse_encode_i_64(groupId, serializer);
+          sse_encode_i_64(currentEpisode, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -213,12 +304,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+          decodeSuccessData: sse_decode_list_danmaku_item,
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiBearsApiApiServiceFetchDanmakuListByIdsConstMeta,
-        argValues: [that, vodId, groupId],
+        argValues: [that, vodId, currentEpisode],
         apiImpl: this,
       ),
     );
@@ -227,7 +317,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiBearsApiApiServiceFetchDanmakuListByIdsConstMeta =>
       const TaskConstMeta(
         debugName: "ApiService_fetch_danmaku_list_by_ids",
-        argNames: ["that", "vodId", "groupId"],
+        argNames: ["that", "vodId", "currentEpisode"],
       );
 
   @override
@@ -267,7 +357,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<Value> crateApiBearsApiApiServiceFetchVideoDetail({
+  Future<String> crateApiBearsApiApiServiceFetchSpecifiedVideoUrl({
+    required ApiService that,
+    required String resolveUrl,
+    required Map<String, String> headers,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
+            that,
+            serializer,
+          );
+          sse_encode_String(resolveUrl, serializer);
+          sse_encode_Map_String_String_None(headers, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiBearsApiApiServiceFetchSpecifiedVideoUrlConstMeta,
+        argValues: [that, resolveUrl, headers],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiBearsApiApiServiceFetchSpecifiedVideoUrlConstMeta =>
+      const TaskConstMeta(
+        debugName: "ApiService_fetch_specified_video_url",
+        argNames: ["that", "resolveUrl", "headers"],
+      );
+
+  @override
+  Future<FrontendVideoDetail> crateApiBearsApiApiServiceFetchVideoDetail({
     required ApiService that,
     required int videoId,
   }) {
@@ -283,13 +414,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 5,
             port: port_,
           );
         },
         codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+          decodeSuccessData: sse_decode_frontend_video_detail,
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiBearsApiApiServiceFetchVideoDetailConstMeta,
@@ -306,10 +436,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<Value> crateApiBearsApiApiServiceFetchVideoList({
+  Future<List<VodListItem>> crateApiBearsApiApiServiceFetchVideoList({
     required ApiService that,
-    required int tid,
-    required int page,
+    required VideoListRequest req,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -319,22 +448,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          sse_encode_i_32(tid, serializer);
-          sse_encode_i_32(page, serializer);
+          sse_encode_box_autoadd_video_list_request(req, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 6,
             port: port_,
           );
         },
         codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+          decodeSuccessData: sse_decode_list_vod_list_item,
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiBearsApiApiServiceFetchVideoListConstMeta,
-        argValues: [that, tid, page],
+        argValues: [that, req],
         apiImpl: this,
       ),
     );
@@ -343,7 +470,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiBearsApiApiServiceFetchVideoListConstMeta =>
       const TaskConstMeta(
         debugName: "ApiService_fetch_video_list",
-        argNames: ["that", "tid", "page"],
+        argNames: ["that", "req"],
       );
 
   @override
@@ -355,14 +482,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 7,
             port: port_,
           );
         },
         codec: SseCodec(
           decodeSuccessData:
               sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService,
-          decodeErrorData: null,
+          decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiBearsApiApiServiceNewConstMeta,
         argValues: [],
@@ -393,7 +520,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
@@ -415,10 +542,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<Value> crateApiBearsApiApiServiceSearch({
+  Future<List<SearchVodItem>> crateApiBearsApiApiServiceSearch({
     required ApiService that,
-    required String keyword,
-    required int page,
+    required SearchRequest req,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -428,22 +554,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          sse_encode_String(keyword, serializer);
-          sse_encode_i_32(page, serializer);
+          sse_encode_box_autoadd_search_request(req, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 9,
             port: port_,
           );
         },
         codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+          decodeSuccessData: sse_decode_list_search_vod_item,
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiBearsApiApiServiceSearchConstMeta,
-        argValues: [that, keyword, page],
+        argValues: [that, req],
         apiImpl: this,
       ),
     );
@@ -452,7 +576,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiBearsApiApiServiceSearchConstMeta =>
       const TaskConstMeta(
         debugName: "ApiService_search",
-        argNames: ["that", "keyword", "page"],
+        argNames: ["that", "req"],
       );
 
   @override
@@ -464,7 +588,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 10,
             port: port_,
           );
         },
@@ -486,13 +610,583 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateApiDatabaseEpisodeDownloadDelete({
+    required PlatformInt64 videoId,
+    required String sourceName,
+    required int episodeIndex,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          sse_encode_String(sourceName, serializer);
+          sse_encode_i_32(episodeIndex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 11,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeDownloadDeleteConstMeta,
+        argValues: [videoId, sourceName, episodeIndex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeDownloadDeleteConstMeta =>
+      const TaskConstMeta(
+        debugName: "episode_download_delete",
+        argNames: ["videoId", "sourceName", "episodeIndex"],
+      );
+
+  @override
+  Future<EpisodeDownloadRecord?> crateApiDatabaseEpisodeDownloadGet({
+    required PlatformInt64 videoId,
+    required String sourceName,
+    required int episodeIndex,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          sse_encode_String(sourceName, serializer);
+          sse_encode_i_32(episodeIndex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 12,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_episode_download_record,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeDownloadGetConstMeta,
+        argValues: [videoId, sourceName, episodeIndex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeDownloadGetConstMeta =>
+      const TaskConstMeta(
+        debugName: "episode_download_get",
+        argNames: ["videoId", "sourceName", "episodeIndex"],
+      );
+
+  @override
+  Future<List<EpisodeDownloadRecord>> crateApiDatabaseEpisodeDownloadGetAll() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 13,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_episode_download_record,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeDownloadGetAllConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeDownloadGetAllConstMeta =>
+      const TaskConstMeta(debugName: "episode_download_get_all", argNames: []);
+
+  @override
+  Future<List<EpisodeDownloadRecord>>
+  crateApiDatabaseEpisodeDownloadGetForVideo({required PlatformInt64 videoId}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 14,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_episode_download_record,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeDownloadGetForVideoConstMeta,
+        argValues: [videoId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeDownloadGetForVideoConstMeta =>
+      const TaskConstMeta(
+        debugName: "episode_download_get_for_video",
+        argNames: ["videoId"],
+      );
+
+  @override
+  Future<void> crateApiDatabaseEpisodeDownloadSave({
+    required EpisodeDownloadRecord record,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_episode_download_record(record, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 15,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeDownloadSaveConstMeta,
+        argValues: [record],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeDownloadSaveConstMeta =>
+      const TaskConstMeta(
+        debugName: "episode_download_save",
+        argNames: ["record"],
+      );
+
+  @override
+  Future<void> crateApiDatabaseEpisodeHistoryClear() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 16,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeHistoryClearConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeHistoryClearConstMeta =>
+      const TaskConstMeta(debugName: "episode_history_clear", argNames: []);
+
+  @override
+  Future<EpisodeHistoryRecord?> crateApiDatabaseEpisodeHistoryGet({
+    required PlatformInt64 videoId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 17,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_episode_history_record,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeHistoryGetConstMeta,
+        argValues: [videoId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeHistoryGetConstMeta =>
+      const TaskConstMeta(
+        debugName: "episode_history_get",
+        argNames: ["videoId"],
+      );
+
+  @override
+  Future<List<EpisodeHistoryRecord>> crateApiDatabaseEpisodeHistoryGetAll() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 18,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_episode_history_record,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeHistoryGetAllConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeHistoryGetAllConstMeta =>
+      const TaskConstMeta(debugName: "episode_history_get_all", argNames: []);
+
+  @override
+  Future<void> crateApiDatabaseEpisodeHistorySaveMetadata({
+    required PlatformInt64 videoId,
+    required int sourceIndex,
+    required int episodeIndex,
+    required String videoTitle,
+    required String videoPoster,
+    required String videoDetailJson,
+    required String sourceName,
+    required String episodeLabel,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          sse_encode_i_32(sourceIndex, serializer);
+          sse_encode_i_32(episodeIndex, serializer);
+          sse_encode_String(videoTitle, serializer);
+          sse_encode_String(videoPoster, serializer);
+          sse_encode_String(videoDetailJson, serializer);
+          sse_encode_String(sourceName, serializer);
+          sse_encode_String(episodeLabel, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 19,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeHistorySaveMetadataConstMeta,
+        argValues: [
+          videoId,
+          sourceIndex,
+          episodeIndex,
+          videoTitle,
+          videoPoster,
+          videoDetailJson,
+          sourceName,
+          episodeLabel,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeHistorySaveMetadataConstMeta =>
+      const TaskConstMeta(
+        debugName: "episode_history_save_metadata",
+        argNames: [
+          "videoId",
+          "sourceIndex",
+          "episodeIndex",
+          "videoTitle",
+          "videoPoster",
+          "videoDetailJson",
+          "sourceName",
+          "episodeLabel",
+        ],
+      );
+
+  @override
+  Future<void> crateApiDatabaseEpisodeHistorySaveProgress({
+    required PlatformInt64 videoId,
+    required int sourceIndex,
+    required int episodeIndex,
+    required PlatformInt64 watchedPositionMs,
+    required PlatformInt64 totalDurationMs,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          sse_encode_i_32(sourceIndex, serializer);
+          sse_encode_i_32(episodeIndex, serializer);
+          sse_encode_i_64(watchedPositionMs, serializer);
+          sse_encode_i_64(totalDurationMs, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 20,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeHistorySaveProgressConstMeta,
+        argValues: [
+          videoId,
+          sourceIndex,
+          episodeIndex,
+          watchedPositionMs,
+          totalDurationMs,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeHistorySaveProgressConstMeta =>
+      const TaskConstMeta(
+        debugName: "episode_history_save_progress",
+        argNames: [
+          "videoId",
+          "sourceIndex",
+          "episodeIndex",
+          "watchedPositionMs",
+          "totalDurationMs",
+        ],
+      );
+
+  @override
+  Future<void> crateApiDatabaseEpisodeHistorySaveSelection({
+    required PlatformInt64 videoId,
+    required int sourceIndex,
+    required int episodeIndex,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          sse_encode_i_32(sourceIndex, serializer);
+          sse_encode_i_32(episodeIndex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 21,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseEpisodeHistorySaveSelectionConstMeta,
+        argValues: [videoId, sourceIndex, episodeIndex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseEpisodeHistorySaveSelectionConstMeta =>
+      const TaskConstMeta(
+        debugName: "episode_history_save_selection",
+        argNames: ["videoId", "sourceIndex", "episodeIndex"],
+      );
+
+  @override
+  Future<List<FavoriteRecord>> crateApiDatabaseFavoriteGetAll() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 22,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_favorite_record,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseFavoriteGetAllConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseFavoriteGetAllConstMeta =>
+      const TaskConstMeta(debugName: "favorite_get_all", argNames: []);
+
+  @override
+  Future<String?> crateApiDatabaseFavoriteGetDetailJson({
+    required PlatformInt64 videoId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 23,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_String,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseFavoriteGetDetailJsonConstMeta,
+        argValues: [videoId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseFavoriteGetDetailJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: "favorite_get_detail_json",
+        argNames: ["videoId"],
+      );
+
+  @override
+  Future<bool> crateApiDatabaseFavoriteIsSaved({
+    required PlatformInt64 videoId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 24,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseFavoriteIsSavedConstMeta,
+        argValues: [videoId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseFavoriteIsSavedConstMeta =>
+      const TaskConstMeta(
+        debugName: "favorite_is_saved",
+        argNames: ["videoId"],
+      );
+
+  @override
+  Future<void> crateApiDatabaseFavoriteRemove({
+    required PlatformInt64 videoId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 25,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseFavoriteRemoveConstMeta,
+        argValues: [videoId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseFavoriteRemoveConstMeta =>
+      const TaskConstMeta(debugName: "favorite_remove", argNames: ["videoId"]);
+
+  @override
+  Future<void> crateApiDatabaseFavoriteSave({
+    required PlatformInt64 videoId,
+    required String videoTitle,
+    required String videoPoster,
+    required String videoDetailJson,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(videoId, serializer);
+          sse_encode_String(videoTitle, serializer);
+          sse_encode_String(videoPoster, serializer);
+          sse_encode_String(videoDetailJson, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 26,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseFavoriteSaveConstMeta,
+        argValues: [videoId, videoTitle, videoPoster, videoDetailJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseFavoriteSaveConstMeta =>
+      const TaskConstMeta(
+        debugName: "favorite_save",
+        argNames: ["videoId", "videoTitle", "videoPoster", "videoDetailJson"],
+      );
+
+  @override
   String crateApiSimpleGreet({required String name}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -517,7 +1211,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 28,
             port: port_,
           );
         },
@@ -535,6 +1229,158 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiSimpleInitAppConstMeta =>
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
+  @override
+  Future<void> crateApiDatabaseInitializeDatabase({required String directory}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(directory, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 29,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseInitializeDatabaseConstMeta,
+        argValues: [directory],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseInitializeDatabaseConstMeta =>
+      const TaskConstMeta(
+        debugName: "initialize_database",
+        argNames: ["directory"],
+      );
+
+  @override
+  Future<ParseVideoResult> crateApiVideoParseApiParseVideoUrl({
+    required String jsonText,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(jsonText, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 30,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_parse_video_result,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiVideoParseApiParseVideoUrlConstMeta,
+        argValues: [jsonText],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVideoParseApiParseVideoUrlConstMeta =>
+      const TaskConstMeta(debugName: "parse_video_url", argNames: ["jsonText"]);
+
+  @override
+  Future<void> crateApiDatabaseSearchHistoryClear() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 31,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseSearchHistoryClearConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseSearchHistoryClearConstMeta =>
+      const TaskConstMeta(debugName: "search_history_clear", argNames: []);
+
+  @override
+  Future<List<String>> crateApiDatabaseSearchHistoryGetRecent({
+    required int limit,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_32(limit, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 32,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_String,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseSearchHistoryGetRecentConstMeta,
+        argValues: [limit],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseSearchHistoryGetRecentConstMeta =>
+      const TaskConstMeta(
+        debugName: "search_history_get_recent",
+        argNames: ["limit"],
+      );
+
+  @override
+  Future<void> crateApiDatabaseSearchHistorySave({required String keyword}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(keyword, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 33,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiDatabaseSearchHistorySaveConstMeta,
+        argValues: [keyword],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiDatabaseSearchHistorySaveConstMeta =>
+      const TaskConstMeta(
+        debugName: "search_history_save",
+        argNames: ["keyword"],
+      );
+
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_ApiService => wire
       .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService;
@@ -542,14 +1388,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   RustArcDecrementStrongCountFnType
   get rust_arc_decrement_strong_count_ApiService => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService;
-
-  RustArcIncrementStrongCountFnType
-  get rust_arc_increment_strong_count_Value => wire
-      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue;
-
-  RustArcDecrementStrongCountFnType
-  get rust_arc_decrement_strong_count_Value => wire
-      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue;
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
@@ -567,21 +1405,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Value
-  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return ValueImpl.frbInternalDcoDecode(raw as List<dynamic>);
-  }
-
-  @protected
   ApiService
   dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return ApiServiceImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  Map<String, String> dco_decode_Map_String_String_None(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return Map.fromEntries(
+      dco_decode_list_record_string_string(
+        raw,
+      ).map((e) => MapEntry(e.$1, e.$2)),
+    );
   }
 
   @protected
@@ -594,18 +1433,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Value
-  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return ValueImpl.frbInternalDcoDecode(raw as List<dynamic>);
-  }
-
-  @protected
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as String;
+  }
+
+  @protected
+  BackendVideoDetail dco_decode_backend_video_detail(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return BackendVideoDetail(
+      commentCount: dco_decode_i_32(arr[0]),
+      isCollect: dco_decode_i_32(arr[1]),
+      vodInfo: dco_decode_vod_info(arr[2]),
+    );
   }
 
   @protected
@@ -631,6 +1474,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EpisodeDownloadRecord dco_decode_box_autoadd_episode_download_record(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_episode_download_record(raw);
+  }
+
+  @protected
+  EpisodeHistoryRecord dco_decode_box_autoadd_episode_history_record(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_episode_history_record(raw);
+  }
+
+  @protected
+  SearchRequest dco_decode_box_autoadd_search_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_search_request(raw);
+  }
+
+  @protected
+  BigInt dco_decode_box_autoadd_usize(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_usize(raw);
+  }
+
+  @protected
+  VideoListRequest dco_decode_box_autoadd_video_list_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_video_list_request(raw);
+  }
+
+  @protected
   CryptoService dco_decode_crypto_service(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -639,6 +1516,103 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return CryptoService(
       buildTime: dco_decode_String(arr[0]),
       pkId: dco_decode_String(arr[1]),
+    );
+  }
+
+  @protected
+  DanmakuItem dco_decode_danmaku_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return DanmakuItem(
+      id: dco_decode_i_32(arr[0]),
+      userId: dco_decode_i_32(arr[1]),
+      content: dco_decode_String(arr[2]),
+      color: dco_decode_String(arr[3]),
+      vTime: dco_decode_String(arr[4]),
+    );
+  }
+
+  @protected
+  Episode dco_decode_episode(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return Episode(
+      label: dco_decode_String(arr[0]),
+      url: dco_decode_String(arr[1]),
+    );
+  }
+
+  @protected
+  EpisodeDownloadRecord dco_decode_episode_download_record(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    return EpisodeDownloadRecord(
+      videoId: dco_decode_i_64(arr[0]),
+      videoTitle: dco_decode_String(arr[1]),
+      videoPoster: dco_decode_String(arr[2]),
+      videoDetailJson: dco_decode_String(arr[3]),
+      sourceName: dco_decode_String(arr[4]),
+      episodeIndex: dco_decode_i_32(arr[5]),
+      episodeLabel: dco_decode_String(arr[6]),
+      remoteUrl: dco_decode_String(arr[7]),
+      localPath: dco_decode_String(arr[8]),
+      headersJson: dco_decode_String(arr[9]),
+      downloadedAt: dco_decode_i_64(arr[10]),
+      fileSizeBytes: dco_decode_i_64(arr[11]),
+    );
+  }
+
+  @protected
+  EpisodeHistoryRecord dco_decode_episode_history_record(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    return EpisodeHistoryRecord(
+      videoId: dco_decode_i_64(arr[0]),
+      sourceIndex: dco_decode_i_32(arr[1]),
+      episodeIndex: dco_decode_i_32(arr[2]),
+      watchedPositionMs: dco_decode_i_64(arr[3]),
+      totalDurationMs: dco_decode_i_64(arr[4]),
+      videoTitle: dco_decode_String(arr[5]),
+      videoPoster: dco_decode_String(arr[6]),
+      videoDetailJson: dco_decode_String(arr[7]),
+      sourceName: dco_decode_String(arr[8]),
+      episodeLabel: dco_decode_String(arr[9]),
+      updatedAt: dco_decode_i_64(arr[10]),
+    );
+  }
+
+  @protected
+  FavoriteRecord dco_decode_favorite_record(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return FavoriteRecord(
+      videoId: dco_decode_i_64(arr[0]),
+      videoTitle: dco_decode_String(arr[1]),
+      videoPoster: dco_decode_String(arr[2]),
+      videoDetailJson: dco_decode_String(arr[3]),
+      createdAt: dco_decode_i_64(arr[4]),
+    );
+  }
+
+  @protected
+  FrontendVideoDetail dco_decode_frontend_video_detail(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return FrontendVideoDetail(
+      playSources: dco_decode_list_play_source(arr[0]),
+      videoInfo: dco_decode_backend_video_detail(arr[1]),
     );
   }
 
@@ -667,7 +1641,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       hasMore: dco_decode_bool(arr[3]),
       moreReqType: dco_decode_i_32(arr[4]),
       moreText: dco_decode_String(arr[5]),
-      vlist: dco_decode_list_vod_item(arr[6]),
+      vlist: dco_decode_list_recommend_vod_item(arr[6]),
     );
   }
 
@@ -684,9 +1658,53 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<String> dco_decode_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
+  }
+
+  @protected
   List<BannerItem> dco_decode_list_banner_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_banner_item).toList();
+  }
+
+  @protected
+  List<DanmakuItem> dco_decode_list_danmaku_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_danmaku_item).toList();
+  }
+
+  @protected
+  List<Episode> dco_decode_list_episode(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_episode).toList();
+  }
+
+  @protected
+  List<EpisodeDownloadRecord> dco_decode_list_episode_download_record(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_episode_download_record)
+        .toList();
+  }
+
+  @protected
+  List<EpisodeHistoryRecord> dco_decode_list_episode_history_record(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_episode_history_record)
+        .toList();
+  }
+
+  @protected
+  List<FavoriteRecord> dco_decode_list_favorite_record(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_favorite_record).toList();
   }
 
   @protected
@@ -696,21 +1714,168 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<PlaySource> dco_decode_list_play_source(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_play_source).toList();
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
   }
 
   @protected
-  List<VodItem> dco_decode_list_vod_item(dynamic raw) {
+  List<RecommendVodItem> dco_decode_list_recommend_vod_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_vod_item).toList();
+    return (raw as List<dynamic>).map(dco_decode_recommend_vod_item).toList();
+  }
+
+  @protected
+  List<(String, String)> dco_decode_list_record_string_string(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_record_string_string).toList();
+  }
+
+  @protected
+  List<SearchVodItem> dco_decode_list_search_vod_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_search_vod_item).toList();
+  }
+
+  @protected
+  List<VodListItem> dco_decode_list_vod_list_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_vod_list_item).toList();
+  }
+
+  @protected
+  List<VodPlayer> dco_decode_list_vod_player(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_vod_player).toList();
   }
 
   @protected
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  EpisodeDownloadRecord? dco_decode_opt_box_autoadd_episode_download_record(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null
+        ? null
+        : dco_decode_box_autoadd_episode_download_record(raw);
+  }
+
+  @protected
+  EpisodeHistoryRecord? dco_decode_opt_box_autoadd_episode_history_record(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null
+        ? null
+        : dco_decode_box_autoadd_episode_history_record(raw);
+  }
+
+  @protected
+  BigInt? dco_decode_opt_box_autoadd_usize(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_usize(raw);
+  }
+
+  @protected
+  List<VodPlayer>? dco_decode_opt_list_vod_player(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_vod_player(raw);
+  }
+
+  @protected
+  ParseVideoResult dco_decode_parse_video_result(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return ParseVideoResult(
+      url: dco_decode_String(arr[0]),
+      mediaType: dco_decode_String(arr[1]),
+    );
+  }
+
+  @protected
+  PlaySource dco_decode_play_source(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return PlaySource(
+      name: dco_decode_String(arr[0]),
+      parseApi: dco_decode_String(arr[1]),
+      episodes: dco_decode_list_episode(arr[2]),
+      needResolve: dco_decode_bool(arr[3]),
+      headers: dco_decode_Map_String_String_None(arr[4]),
+    );
+  }
+
+  @protected
+  RecommendVodItem dco_decode_recommend_vod_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return RecommendVodItem(
+      vodId: dco_decode_i_32(arr[0]),
+      vodName: dco_decode_String(arr[1]),
+      vodPic: dco_decode_String(arr[2]),
+      vodRemarks: dco_decode_String(arr[3]),
+      typeId: dco_decode_i_32(arr[4]),
+    );
+  }
+
+  @protected
+  (String, String) dco_decode_record_string_string(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) {
+      throw Exception('Expected 2 elements, got ${arr.length}');
+    }
+    return (dco_decode_String(arr[0]), dco_decode_String(arr[1]));
+  }
+
+  @protected
+  SearchRequest dco_decode_search_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return SearchRequest(
+      pg: dco_decode_usize(arr[0]),
+      tid: dco_decode_opt_box_autoadd_usize(arr[1]),
+      text: dco_decode_String(arr[2]),
+      token: dco_decode_String(arr[3]),
+    );
+  }
+
+  @protected
+  SearchVodItem dco_decode_search_vod_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    return SearchVodItem(
+      typeId: dco_decode_i_32(arr[0]),
+      vodId: dco_decode_i_64(arr[1]),
+      vodName: dco_decode_String(arr[2]),
+      vodActor: dco_decode_String(arr[3]),
+      vodArea: dco_decode_String(arr[4]),
+      vodLang: dco_decode_String(arr[5]),
+      vodPic: dco_decode_String(arr[6]),
+      vodRemarks: dco_decode_String(arr[7]),
+      vodYear: dco_decode_String(arr[8]),
+    );
   }
 
   @protected
@@ -732,17 +1897,148 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  VodItem dco_decode_vod_item(dynamic raw) {
+  VideoListRequest dco_decode_video_list_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return VideoListRequest(
+      pg: dco_decode_usize(arr[0]),
+      tid: dco_decode_usize(arr[1]),
+      class_: dco_decode_String(arr[2]),
+      area: dco_decode_String(arr[3]),
+      lang: dco_decode_String(arr[4]),
+      year: dco_decode_String(arr[5]),
+      order: dco_decode_String(arr[6]),
+      token: dco_decode_String(arr[7]),
+    );
+  }
+
+  @protected
+  VodInfo dco_decode_vod_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 83)
+      throw Exception('unexpected arr length: expect 83 but see ${arr.length}');
+    return VodInfo(
+      groupId: dco_decode_i_32(arr[0]),
+      typeId: dco_decode_i_32(arr[1]),
+      typeId1: dco_decode_i_32(arr[2]),
+      vodId: dco_decode_i_64(arr[3]),
+      vodName: dco_decode_String(arr[4]),
+      vodEn: dco_decode_String(arr[5]),
+      vodSub: dco_decode_String(arr[6]),
+      vodActor: dco_decode_String(arr[7]),
+      vodDirector: dco_decode_String(arr[8]),
+      vodWriter: dco_decode_String(arr[9]),
+      vodArea: dco_decode_String(arr[10]),
+      vodLang: dco_decode_String(arr[11]),
+      vodYear: dco_decode_String(arr[12]),
+      vodClass: dco_decode_String(arr[13]),
+      vodPic: dco_decode_String(arr[14]),
+      vodPicThumb: dco_decode_String(arr[15]),
+      vodPicSlide: dco_decode_String(arr[16]),
+      vodPicScreenshot: dco_decode_opt_String(arr[17]),
+      vodBlurb: dco_decode_String(arr[18]),
+      vodContent: dco_decode_String(arr[19]),
+      vodRemarks: dco_decode_String(arr[20]),
+      vodPubdate: dco_decode_String(arr[21]),
+      vodTotal: dco_decode_i_32(arr[22]),
+      vodSerial: dco_decode_String(arr[23]),
+      vodDuration: dco_decode_String(arr[24]),
+      vodScore: dco_decode_String(arr[25]),
+      vodScoreAll: dco_decode_i_32(arr[26]),
+      vodScoreNum: dco_decode_i_32(arr[27]),
+      vodDoubanId: dco_decode_i_64(arr[28]),
+      vodDoubanScore: dco_decode_String(arr[29]),
+      vodHits: dco_decode_i_64(arr[30]),
+      vodHitsDay: dco_decode_i_64(arr[31]),
+      vodHitsWeek: dco_decode_i_64(arr[32]),
+      vodHitsMonth: dco_decode_i_64(arr[33]),
+      vodUp: dco_decode_i_64(arr[34]),
+      vodDown: dco_decode_i_64(arr[35]),
+      vodStatus: dco_decode_i_32(arr[36]),
+      vodIsend: dco_decode_i_32(arr[37]),
+      vodLock: dco_decode_i_32(arr[38]),
+      vodLevel: dco_decode_i_32(arr[39]),
+      vodCopyright: dco_decode_i_32(arr[40]),
+      vodPoints: dco_decode_i_32(arr[41]),
+      vodPointsPlay: dco_decode_i_32(arr[42]),
+      vodPointsDown: dco_decode_i_32(arr[43]),
+      vodTrysee: dco_decode_i_32(arr[44]),
+      vodPlot: dco_decode_i_32(arr[45]),
+      vodPlotName: dco_decode_String(arr[46]),
+      vodPlotDetail: dco_decode_String(arr[47]),
+      vodPlayFrom: dco_decode_String(arr[48]),
+      vodPlayServer: dco_decode_String(arr[49]),
+      vodPlayNote: dco_decode_String(arr[50]),
+      vodPlayUrl: dco_decode_String(arr[51]),
+      vodDownFrom: dco_decode_String(arr[52]),
+      vodDownServer: dco_decode_String(arr[53]),
+      vodDownNote: dco_decode_String(arr[54]),
+      vodDownUrl: dco_decode_String(arr[55]),
+      vodJumpurl: dco_decode_String(arr[56]),
+      vodPwd: dco_decode_String(arr[57]),
+      vodPwdUrl: dco_decode_String(arr[58]),
+      vodPwdPlay: dco_decode_String(arr[59]),
+      vodPwdPlayUrl: dco_decode_String(arr[60]),
+      vodPwdDown: dco_decode_String(arr[61]),
+      vodPwdDownUrl: dco_decode_String(arr[62]),
+      vodRelVod: dco_decode_String(arr[63]),
+      vodRelArt: dco_decode_String(arr[64]),
+      vodTag: dco_decode_String(arr[65]),
+      vodLetter: dco_decode_String(arr[66]),
+      vodColor: dco_decode_String(arr[67]),
+      vodAuthor: dco_decode_String(arr[68]),
+      vodBehind: dco_decode_String(arr[69]),
+      vodState: dco_decode_String(arr[70]),
+      vodVersion: dco_decode_String(arr[71]),
+      vodWeekday: dco_decode_String(arr[72]),
+      vodTv: dco_decode_String(arr[73]),
+      vodTpl: dco_decode_String(arr[74]),
+      vodTplPlay: dco_decode_String(arr[75]),
+      vodTplDown: dco_decode_String(arr[76]),
+      vodReurl: dco_decode_String(arr[77]),
+      vodTime: dco_decode_i_64(arr[78]),
+      vodTimeAdd: dco_decode_i_64(arr[79]),
+      vodTimeHits: dco_decode_i_64(arr[80]),
+      vodTimeMake: dco_decode_i_64(arr[81]),
+      vodUrlWithPlayer: dco_decode_opt_list_vod_player(arr[82]),
+    );
+  }
+
+  @protected
+  VodListItem dco_decode_vod_list_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
     if (arr.length != 5)
       throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
-    return VodItem(
-      vodId: dco_decode_i_32(arr[0]),
-      vodName: dco_decode_String(arr[1]),
-      vodPic: dco_decode_String(arr[2]),
-      vodRemarks: dco_decode_String(arr[3]),
-      typeId: dco_decode_i_32(arr[4]),
+    return VodListItem(
+      typeId: dco_decode_i_32(arr[0]),
+      vodId: dco_decode_i_64(arr[1]),
+      vodName: dco_decode_String(arr[2]),
+      vodPic: dco_decode_String(arr[3]),
+      vodRemarks: dco_decode_String(arr[4]),
+    );
+  }
+
+  @protected
+  VodPlayer dco_decode_vod_player(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return VodPlayer(
+      code: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      url: dco_decode_String(arr[2]),
+      headers: dco_decode_String(arr[3]),
+      parseApi: dco_decode_String(arr[4]),
+      extraParseApi: dco_decode_String(arr[5]),
+      parseSecret: dco_decode_bool(arr[6]),
+      linkFeatures: dco_decode_String(arr[7]),
+      unLinkFeatures: dco_decode_String(arr[8]),
+      coreParams: dco_decode_list_String(arr[9]),
     );
   }
 
@@ -766,18 +2062,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Value
-  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return ValueImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
   ApiService
   sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
     SseDeserializer deserializer,
@@ -787,6 +2071,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
+  }
+
+  @protected
+  Map<String, String> sse_decode_Map_String_String_None(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_list_record_string_string(deserializer);
+    return Map.fromEntries(inner.map((e) => MapEntry(e.$1, e.$2)));
   }
 
   @protected
@@ -802,22 +2095,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Value
-  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return ValueImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
     return utf8.decoder.convert(inner);
+  }
+
+  @protected
+  BackendVideoDetail sse_decode_backend_video_detail(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_commentCount = sse_decode_i_32(deserializer);
+    var var_isCollect = sse_decode_i_32(deserializer);
+    var var_vodInfo = sse_decode_vod_info(deserializer);
+    return BackendVideoDetail(
+      commentCount: var_commentCount,
+      isCollect: var_isCollect,
+      vodInfo: var_vodInfo,
+    );
   }
 
   @protected
@@ -846,11 +2142,168 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EpisodeDownloadRecord sse_decode_box_autoadd_episode_download_record(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_episode_download_record(deserializer));
+  }
+
+  @protected
+  EpisodeHistoryRecord sse_decode_box_autoadd_episode_history_record(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_episode_history_record(deserializer));
+  }
+
+  @protected
+  SearchRequest sse_decode_box_autoadd_search_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_search_request(deserializer));
+  }
+
+  @protected
+  BigInt sse_decode_box_autoadd_usize(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_usize(deserializer));
+  }
+
+  @protected
+  VideoListRequest sse_decode_box_autoadd_video_list_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_video_list_request(deserializer));
+  }
+
+  @protected
   CryptoService sse_decode_crypto_service(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_buildTime = sse_decode_String(deserializer);
     var var_pkId = sse_decode_String(deserializer);
     return CryptoService(buildTime: var_buildTime, pkId: var_pkId);
+  }
+
+  @protected
+  DanmakuItem sse_decode_danmaku_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_i_32(deserializer);
+    var var_userId = sse_decode_i_32(deserializer);
+    var var_content = sse_decode_String(deserializer);
+    var var_color = sse_decode_String(deserializer);
+    var var_vTime = sse_decode_String(deserializer);
+    return DanmakuItem(
+      id: var_id,
+      userId: var_userId,
+      content: var_content,
+      color: var_color,
+      vTime: var_vTime,
+    );
+  }
+
+  @protected
+  Episode sse_decode_episode(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_label = sse_decode_String(deserializer);
+    var var_url = sse_decode_String(deserializer);
+    return Episode(label: var_label, url: var_url);
+  }
+
+  @protected
+  EpisodeDownloadRecord sse_decode_episode_download_record(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_videoId = sse_decode_i_64(deserializer);
+    var var_videoTitle = sse_decode_String(deserializer);
+    var var_videoPoster = sse_decode_String(deserializer);
+    var var_videoDetailJson = sse_decode_String(deserializer);
+    var var_sourceName = sse_decode_String(deserializer);
+    var var_episodeIndex = sse_decode_i_32(deserializer);
+    var var_episodeLabel = sse_decode_String(deserializer);
+    var var_remoteUrl = sse_decode_String(deserializer);
+    var var_localPath = sse_decode_String(deserializer);
+    var var_headersJson = sse_decode_String(deserializer);
+    var var_downloadedAt = sse_decode_i_64(deserializer);
+    var var_fileSizeBytes = sse_decode_i_64(deserializer);
+    return EpisodeDownloadRecord(
+      videoId: var_videoId,
+      videoTitle: var_videoTitle,
+      videoPoster: var_videoPoster,
+      videoDetailJson: var_videoDetailJson,
+      sourceName: var_sourceName,
+      episodeIndex: var_episodeIndex,
+      episodeLabel: var_episodeLabel,
+      remoteUrl: var_remoteUrl,
+      localPath: var_localPath,
+      headersJson: var_headersJson,
+      downloadedAt: var_downloadedAt,
+      fileSizeBytes: var_fileSizeBytes,
+    );
+  }
+
+  @protected
+  EpisodeHistoryRecord sse_decode_episode_history_record(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_videoId = sse_decode_i_64(deserializer);
+    var var_sourceIndex = sse_decode_i_32(deserializer);
+    var var_episodeIndex = sse_decode_i_32(deserializer);
+    var var_watchedPositionMs = sse_decode_i_64(deserializer);
+    var var_totalDurationMs = sse_decode_i_64(deserializer);
+    var var_videoTitle = sse_decode_String(deserializer);
+    var var_videoPoster = sse_decode_String(deserializer);
+    var var_videoDetailJson = sse_decode_String(deserializer);
+    var var_sourceName = sse_decode_String(deserializer);
+    var var_episodeLabel = sse_decode_String(deserializer);
+    var var_updatedAt = sse_decode_i_64(deserializer);
+    return EpisodeHistoryRecord(
+      videoId: var_videoId,
+      sourceIndex: var_sourceIndex,
+      episodeIndex: var_episodeIndex,
+      watchedPositionMs: var_watchedPositionMs,
+      totalDurationMs: var_totalDurationMs,
+      videoTitle: var_videoTitle,
+      videoPoster: var_videoPoster,
+      videoDetailJson: var_videoDetailJson,
+      sourceName: var_sourceName,
+      episodeLabel: var_episodeLabel,
+      updatedAt: var_updatedAt,
+    );
+  }
+
+  @protected
+  FavoriteRecord sse_decode_favorite_record(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_videoId = sse_decode_i_64(deserializer);
+    var var_videoTitle = sse_decode_String(deserializer);
+    var var_videoPoster = sse_decode_String(deserializer);
+    var var_videoDetailJson = sse_decode_String(deserializer);
+    var var_createdAt = sse_decode_i_64(deserializer);
+    return FavoriteRecord(
+      videoId: var_videoId,
+      videoTitle: var_videoTitle,
+      videoPoster: var_videoPoster,
+      videoDetailJson: var_videoDetailJson,
+      createdAt: var_createdAt,
+    );
+  }
+
+  @protected
+  FrontendVideoDetail sse_decode_frontend_video_detail(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_playSources = sse_decode_list_play_source(deserializer);
+    var var_videoInfo = sse_decode_backend_video_detail(deserializer);
+    return FrontendVideoDetail(
+      playSources: var_playSources,
+      videoInfo: var_videoInfo,
+    );
   }
 
   @protected
@@ -872,7 +2325,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_hasMore = sse_decode_bool(deserializer);
     var var_moreReqType = sse_decode_i_32(deserializer);
     var var_moreText = sse_decode_String(deserializer);
-    var var_vlist = sse_decode_list_vod_item(deserializer);
+    var var_vlist = sse_decode_list_recommend_vod_item(deserializer);
     return HomeVideoSection(
       id: var_id,
       name: var_name,
@@ -897,6 +2350,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<BannerItem> sse_decode_list_banner_item(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -904,6 +2369,72 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <BannerItem>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_banner_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<DanmakuItem> sse_decode_list_danmaku_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <DanmakuItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_danmaku_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Episode> sse_decode_list_episode(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Episode>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_episode(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<EpisodeDownloadRecord> sse_decode_list_episode_download_record(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <EpisodeDownloadRecord>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_episode_download_record(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<EpisodeHistoryRecord> sse_decode_list_episode_history_record(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <EpisodeHistoryRecord>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_episode_history_record(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<FavoriteRecord> sse_decode_list_favorite_record(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <FavoriteRecord>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_favorite_record(deserializer));
     }
     return ans_;
   }
@@ -923,6 +2454,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<PlaySource> sse_decode_list_play_source(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <PlaySource>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_play_source(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -930,13 +2473,69 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<VodItem> sse_decode_list_vod_item(SseDeserializer deserializer) {
+  List<RecommendVodItem> sse_decode_list_recommend_vod_item(
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <VodItem>[];
+    var ans_ = <RecommendVodItem>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_vod_item(deserializer));
+      ans_.add(sse_decode_recommend_vod_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<(String, String)> sse_decode_list_record_string_string(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <(String, String)>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_record_string_string(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<SearchVodItem> sse_decode_list_search_vod_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SearchVodItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_search_vod_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VodListItem> sse_decode_list_vod_list_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <VodListItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_vod_list_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VodPlayer> sse_decode_list_vod_player(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <VodPlayer>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_vod_player(deserializer));
     }
     return ans_;
   }
@@ -950,6 +2549,148 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     } else {
       return null;
     }
+  }
+
+  @protected
+  EpisodeDownloadRecord? sse_decode_opt_box_autoadd_episode_download_record(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_episode_download_record(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  EpisodeHistoryRecord? sse_decode_opt_box_autoadd_episode_history_record(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_episode_history_record(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  BigInt? sse_decode_opt_box_autoadd_usize(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_usize(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  List<VodPlayer>? sse_decode_opt_list_vod_player(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_list_vod_player(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  ParseVideoResult sse_decode_parse_video_result(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_url = sse_decode_String(deserializer);
+    var var_mediaType = sse_decode_String(deserializer);
+    return ParseVideoResult(url: var_url, mediaType: var_mediaType);
+  }
+
+  @protected
+  PlaySource sse_decode_play_source(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_parseApi = sse_decode_String(deserializer);
+    var var_episodes = sse_decode_list_episode(deserializer);
+    var var_needResolve = sse_decode_bool(deserializer);
+    var var_headers = sse_decode_Map_String_String_None(deserializer);
+    return PlaySource(
+      name: var_name,
+      parseApi: var_parseApi,
+      episodes: var_episodes,
+      needResolve: var_needResolve,
+      headers: var_headers,
+    );
+  }
+
+  @protected
+  RecommendVodItem sse_decode_recommend_vod_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_vodId = sse_decode_i_32(deserializer);
+    var var_vodName = sse_decode_String(deserializer);
+    var var_vodPic = sse_decode_String(deserializer);
+    var var_vodRemarks = sse_decode_String(deserializer);
+    var var_typeId = sse_decode_i_32(deserializer);
+    return RecommendVodItem(
+      vodId: var_vodId,
+      vodName: var_vodName,
+      vodPic: var_vodPic,
+      vodRemarks: var_vodRemarks,
+      typeId: var_typeId,
+    );
+  }
+
+  @protected
+  (String, String) sse_decode_record_string_string(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_field0 = sse_decode_String(deserializer);
+    var var_field1 = sse_decode_String(deserializer);
+    return (var_field0, var_field1);
+  }
+
+  @protected
+  SearchRequest sse_decode_search_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_pg = sse_decode_usize(deserializer);
+    var var_tid = sse_decode_opt_box_autoadd_usize(deserializer);
+    var var_text = sse_decode_String(deserializer);
+    var var_token = sse_decode_String(deserializer);
+    return SearchRequest(
+      pg: var_pg,
+      tid: var_tid,
+      text: var_text,
+      token: var_token,
+    );
+  }
+
+  @protected
+  SearchVodItem sse_decode_search_vod_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_typeId = sse_decode_i_32(deserializer);
+    var var_vodId = sse_decode_i_64(deserializer);
+    var var_vodName = sse_decode_String(deserializer);
+    var var_vodActor = sse_decode_String(deserializer);
+    var var_vodArea = sse_decode_String(deserializer);
+    var var_vodLang = sse_decode_String(deserializer);
+    var var_vodPic = sse_decode_String(deserializer);
+    var var_vodRemarks = sse_decode_String(deserializer);
+    var var_vodYear = sse_decode_String(deserializer);
+    return SearchVodItem(
+      typeId: var_typeId,
+      vodId: var_vodId,
+      vodName: var_vodName,
+      vodActor: var_vodActor,
+      vodArea: var_vodArea,
+      vodLang: var_vodLang,
+      vodPic: var_vodPic,
+      vodRemarks: var_vodRemarks,
+      vodYear: var_vodYear,
+    );
   }
 
   @protected
@@ -970,19 +2711,242 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  VodItem sse_decode_vod_item(SseDeserializer deserializer) {
+  VideoListRequest sse_decode_video_list_request(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_vodId = sse_decode_i_32(deserializer);
+    var var_pg = sse_decode_usize(deserializer);
+    var var_tid = sse_decode_usize(deserializer);
+    var var_class_ = sse_decode_String(deserializer);
+    var var_area = sse_decode_String(deserializer);
+    var var_lang = sse_decode_String(deserializer);
+    var var_year = sse_decode_String(deserializer);
+    var var_order = sse_decode_String(deserializer);
+    var var_token = sse_decode_String(deserializer);
+    return VideoListRequest(
+      pg: var_pg,
+      tid: var_tid,
+      class_: var_class_,
+      area: var_area,
+      lang: var_lang,
+      year: var_year,
+      order: var_order,
+      token: var_token,
+    );
+  }
+
+  @protected
+  VodInfo sse_decode_vod_info(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_groupId = sse_decode_i_32(deserializer);
+    var var_typeId = sse_decode_i_32(deserializer);
+    var var_typeId1 = sse_decode_i_32(deserializer);
+    var var_vodId = sse_decode_i_64(deserializer);
+    var var_vodName = sse_decode_String(deserializer);
+    var var_vodEn = sse_decode_String(deserializer);
+    var var_vodSub = sse_decode_String(deserializer);
+    var var_vodActor = sse_decode_String(deserializer);
+    var var_vodDirector = sse_decode_String(deserializer);
+    var var_vodWriter = sse_decode_String(deserializer);
+    var var_vodArea = sse_decode_String(deserializer);
+    var var_vodLang = sse_decode_String(deserializer);
+    var var_vodYear = sse_decode_String(deserializer);
+    var var_vodClass = sse_decode_String(deserializer);
+    var var_vodPic = sse_decode_String(deserializer);
+    var var_vodPicThumb = sse_decode_String(deserializer);
+    var var_vodPicSlide = sse_decode_String(deserializer);
+    var var_vodPicScreenshot = sse_decode_opt_String(deserializer);
+    var var_vodBlurb = sse_decode_String(deserializer);
+    var var_vodContent = sse_decode_String(deserializer);
+    var var_vodRemarks = sse_decode_String(deserializer);
+    var var_vodPubdate = sse_decode_String(deserializer);
+    var var_vodTotal = sse_decode_i_32(deserializer);
+    var var_vodSerial = sse_decode_String(deserializer);
+    var var_vodDuration = sse_decode_String(deserializer);
+    var var_vodScore = sse_decode_String(deserializer);
+    var var_vodScoreAll = sse_decode_i_32(deserializer);
+    var var_vodScoreNum = sse_decode_i_32(deserializer);
+    var var_vodDoubanId = sse_decode_i_64(deserializer);
+    var var_vodDoubanScore = sse_decode_String(deserializer);
+    var var_vodHits = sse_decode_i_64(deserializer);
+    var var_vodHitsDay = sse_decode_i_64(deserializer);
+    var var_vodHitsWeek = sse_decode_i_64(deserializer);
+    var var_vodHitsMonth = sse_decode_i_64(deserializer);
+    var var_vodUp = sse_decode_i_64(deserializer);
+    var var_vodDown = sse_decode_i_64(deserializer);
+    var var_vodStatus = sse_decode_i_32(deserializer);
+    var var_vodIsend = sse_decode_i_32(deserializer);
+    var var_vodLock = sse_decode_i_32(deserializer);
+    var var_vodLevel = sse_decode_i_32(deserializer);
+    var var_vodCopyright = sse_decode_i_32(deserializer);
+    var var_vodPoints = sse_decode_i_32(deserializer);
+    var var_vodPointsPlay = sse_decode_i_32(deserializer);
+    var var_vodPointsDown = sse_decode_i_32(deserializer);
+    var var_vodTrysee = sse_decode_i_32(deserializer);
+    var var_vodPlot = sse_decode_i_32(deserializer);
+    var var_vodPlotName = sse_decode_String(deserializer);
+    var var_vodPlotDetail = sse_decode_String(deserializer);
+    var var_vodPlayFrom = sse_decode_String(deserializer);
+    var var_vodPlayServer = sse_decode_String(deserializer);
+    var var_vodPlayNote = sse_decode_String(deserializer);
+    var var_vodPlayUrl = sse_decode_String(deserializer);
+    var var_vodDownFrom = sse_decode_String(deserializer);
+    var var_vodDownServer = sse_decode_String(deserializer);
+    var var_vodDownNote = sse_decode_String(deserializer);
+    var var_vodDownUrl = sse_decode_String(deserializer);
+    var var_vodJumpurl = sse_decode_String(deserializer);
+    var var_vodPwd = sse_decode_String(deserializer);
+    var var_vodPwdUrl = sse_decode_String(deserializer);
+    var var_vodPwdPlay = sse_decode_String(deserializer);
+    var var_vodPwdPlayUrl = sse_decode_String(deserializer);
+    var var_vodPwdDown = sse_decode_String(deserializer);
+    var var_vodPwdDownUrl = sse_decode_String(deserializer);
+    var var_vodRelVod = sse_decode_String(deserializer);
+    var var_vodRelArt = sse_decode_String(deserializer);
+    var var_vodTag = sse_decode_String(deserializer);
+    var var_vodLetter = sse_decode_String(deserializer);
+    var var_vodColor = sse_decode_String(deserializer);
+    var var_vodAuthor = sse_decode_String(deserializer);
+    var var_vodBehind = sse_decode_String(deserializer);
+    var var_vodState = sse_decode_String(deserializer);
+    var var_vodVersion = sse_decode_String(deserializer);
+    var var_vodWeekday = sse_decode_String(deserializer);
+    var var_vodTv = sse_decode_String(deserializer);
+    var var_vodTpl = sse_decode_String(deserializer);
+    var var_vodTplPlay = sse_decode_String(deserializer);
+    var var_vodTplDown = sse_decode_String(deserializer);
+    var var_vodReurl = sse_decode_String(deserializer);
+    var var_vodTime = sse_decode_i_64(deserializer);
+    var var_vodTimeAdd = sse_decode_i_64(deserializer);
+    var var_vodTimeHits = sse_decode_i_64(deserializer);
+    var var_vodTimeMake = sse_decode_i_64(deserializer);
+    var var_vodUrlWithPlayer = sse_decode_opt_list_vod_player(deserializer);
+    return VodInfo(
+      groupId: var_groupId,
+      typeId: var_typeId,
+      typeId1: var_typeId1,
+      vodId: var_vodId,
+      vodName: var_vodName,
+      vodEn: var_vodEn,
+      vodSub: var_vodSub,
+      vodActor: var_vodActor,
+      vodDirector: var_vodDirector,
+      vodWriter: var_vodWriter,
+      vodArea: var_vodArea,
+      vodLang: var_vodLang,
+      vodYear: var_vodYear,
+      vodClass: var_vodClass,
+      vodPic: var_vodPic,
+      vodPicThumb: var_vodPicThumb,
+      vodPicSlide: var_vodPicSlide,
+      vodPicScreenshot: var_vodPicScreenshot,
+      vodBlurb: var_vodBlurb,
+      vodContent: var_vodContent,
+      vodRemarks: var_vodRemarks,
+      vodPubdate: var_vodPubdate,
+      vodTotal: var_vodTotal,
+      vodSerial: var_vodSerial,
+      vodDuration: var_vodDuration,
+      vodScore: var_vodScore,
+      vodScoreAll: var_vodScoreAll,
+      vodScoreNum: var_vodScoreNum,
+      vodDoubanId: var_vodDoubanId,
+      vodDoubanScore: var_vodDoubanScore,
+      vodHits: var_vodHits,
+      vodHitsDay: var_vodHitsDay,
+      vodHitsWeek: var_vodHitsWeek,
+      vodHitsMonth: var_vodHitsMonth,
+      vodUp: var_vodUp,
+      vodDown: var_vodDown,
+      vodStatus: var_vodStatus,
+      vodIsend: var_vodIsend,
+      vodLock: var_vodLock,
+      vodLevel: var_vodLevel,
+      vodCopyright: var_vodCopyright,
+      vodPoints: var_vodPoints,
+      vodPointsPlay: var_vodPointsPlay,
+      vodPointsDown: var_vodPointsDown,
+      vodTrysee: var_vodTrysee,
+      vodPlot: var_vodPlot,
+      vodPlotName: var_vodPlotName,
+      vodPlotDetail: var_vodPlotDetail,
+      vodPlayFrom: var_vodPlayFrom,
+      vodPlayServer: var_vodPlayServer,
+      vodPlayNote: var_vodPlayNote,
+      vodPlayUrl: var_vodPlayUrl,
+      vodDownFrom: var_vodDownFrom,
+      vodDownServer: var_vodDownServer,
+      vodDownNote: var_vodDownNote,
+      vodDownUrl: var_vodDownUrl,
+      vodJumpurl: var_vodJumpurl,
+      vodPwd: var_vodPwd,
+      vodPwdUrl: var_vodPwdUrl,
+      vodPwdPlay: var_vodPwdPlay,
+      vodPwdPlayUrl: var_vodPwdPlayUrl,
+      vodPwdDown: var_vodPwdDown,
+      vodPwdDownUrl: var_vodPwdDownUrl,
+      vodRelVod: var_vodRelVod,
+      vodRelArt: var_vodRelArt,
+      vodTag: var_vodTag,
+      vodLetter: var_vodLetter,
+      vodColor: var_vodColor,
+      vodAuthor: var_vodAuthor,
+      vodBehind: var_vodBehind,
+      vodState: var_vodState,
+      vodVersion: var_vodVersion,
+      vodWeekday: var_vodWeekday,
+      vodTv: var_vodTv,
+      vodTpl: var_vodTpl,
+      vodTplPlay: var_vodTplPlay,
+      vodTplDown: var_vodTplDown,
+      vodReurl: var_vodReurl,
+      vodTime: var_vodTime,
+      vodTimeAdd: var_vodTimeAdd,
+      vodTimeHits: var_vodTimeHits,
+      vodTimeMake: var_vodTimeMake,
+      vodUrlWithPlayer: var_vodUrlWithPlayer,
+    );
+  }
+
+  @protected
+  VodListItem sse_decode_vod_list_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_typeId = sse_decode_i_32(deserializer);
+    var var_vodId = sse_decode_i_64(deserializer);
     var var_vodName = sse_decode_String(deserializer);
     var var_vodPic = sse_decode_String(deserializer);
     var var_vodRemarks = sse_decode_String(deserializer);
-    var var_typeId = sse_decode_i_32(deserializer);
-    return VodItem(
+    return VodListItem(
+      typeId: var_typeId,
       vodId: var_vodId,
       vodName: var_vodName,
       vodPic: var_vodPic,
       vodRemarks: var_vodRemarks,
-      typeId: var_typeId,
+    );
+  }
+
+  @protected
+  VodPlayer sse_decode_vod_player(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_code = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_url = sse_decode_String(deserializer);
+    var var_headers = sse_decode_String(deserializer);
+    var var_parseApi = sse_decode_String(deserializer);
+    var var_extraParseApi = sse_decode_String(deserializer);
+    var var_parseSecret = sse_decode_bool(deserializer);
+    var var_linkFeatures = sse_decode_String(deserializer);
+    var var_unLinkFeatures = sse_decode_String(deserializer);
+    var var_coreParams = sse_decode_list_String(deserializer);
+    return VodPlayer(
+      code: var_code,
+      name: var_name,
+      url: var_url,
+      headers: var_headers,
+      parseApi: var_parseApi,
+      extraParseApi: var_extraParseApi,
+      parseSecret: var_parseSecret,
+      linkFeatures: var_linkFeatures,
+      unLinkFeatures: var_unLinkFeatures,
+      coreParams: var_coreParams,
     );
   }
 
@@ -1010,19 +2974,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
-    Value self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as ValueImpl).frbInternalSseEncode(move: true),
-      serializer,
-    );
-  }
-
-  @protected
-  void
   sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerApiService(
     ApiService self,
     SseSerializer serializer,
@@ -1030,6 +2981,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
       (self as ApiServiceImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void sse_encode_Map_String_String_None(
+    Map<String, String> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_record_string_string(
+      self.entries.map((e) => (e.key, e.value)).toList(),
       serializer,
     );
   }
@@ -1048,22 +3011,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void
-  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
-    Value self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as ValueImpl).frbInternalSseEncode(move: null),
-      serializer,
-    );
-  }
-
-  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
+  }
+
+  @protected
+  void sse_encode_backend_video_detail(
+    BackendVideoDetail self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.commentCount, serializer);
+    sse_encode_i_32(self.isCollect, serializer);
+    sse_encode_vod_info(self.vodInfo, serializer);
   }
 
   @protected
@@ -1084,10 +3045,131 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_episode_download_record(
+    EpisodeDownloadRecord self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_episode_download_record(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_episode_history_record(
+    EpisodeHistoryRecord self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_episode_history_record(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_search_request(
+    SearchRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_search_request(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_usize(BigInt self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_video_list_request(
+    VideoListRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_video_list_request(self, serializer);
+  }
+
+  @protected
   void sse_encode_crypto_service(CryptoService self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.buildTime, serializer);
     sse_encode_String(self.pkId, serializer);
+  }
+
+  @protected
+  void sse_encode_danmaku_item(DanmakuItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.id, serializer);
+    sse_encode_i_32(self.userId, serializer);
+    sse_encode_String(self.content, serializer);
+    sse_encode_String(self.color, serializer);
+    sse_encode_String(self.vTime, serializer);
+  }
+
+  @protected
+  void sse_encode_episode(Episode self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.label, serializer);
+    sse_encode_String(self.url, serializer);
+  }
+
+  @protected
+  void sse_encode_episode_download_record(
+    EpisodeDownloadRecord self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_64(self.videoId, serializer);
+    sse_encode_String(self.videoTitle, serializer);
+    sse_encode_String(self.videoPoster, serializer);
+    sse_encode_String(self.videoDetailJson, serializer);
+    sse_encode_String(self.sourceName, serializer);
+    sse_encode_i_32(self.episodeIndex, serializer);
+    sse_encode_String(self.episodeLabel, serializer);
+    sse_encode_String(self.remoteUrl, serializer);
+    sse_encode_String(self.localPath, serializer);
+    sse_encode_String(self.headersJson, serializer);
+    sse_encode_i_64(self.downloadedAt, serializer);
+    sse_encode_i_64(self.fileSizeBytes, serializer);
+  }
+
+  @protected
+  void sse_encode_episode_history_record(
+    EpisodeHistoryRecord self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_64(self.videoId, serializer);
+    sse_encode_i_32(self.sourceIndex, serializer);
+    sse_encode_i_32(self.episodeIndex, serializer);
+    sse_encode_i_64(self.watchedPositionMs, serializer);
+    sse_encode_i_64(self.totalDurationMs, serializer);
+    sse_encode_String(self.videoTitle, serializer);
+    sse_encode_String(self.videoPoster, serializer);
+    sse_encode_String(self.videoDetailJson, serializer);
+    sse_encode_String(self.sourceName, serializer);
+    sse_encode_String(self.episodeLabel, serializer);
+    sse_encode_i_64(self.updatedAt, serializer);
+  }
+
+  @protected
+  void sse_encode_favorite_record(
+    FavoriteRecord self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_64(self.videoId, serializer);
+    sse_encode_String(self.videoTitle, serializer);
+    sse_encode_String(self.videoPoster, serializer);
+    sse_encode_String(self.videoDetailJson, serializer);
+    sse_encode_i_64(self.createdAt, serializer);
+  }
+
+  @protected
+  void sse_encode_frontend_video_detail(
+    FrontendVideoDetail self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_play_source(self.playSources, serializer);
+    sse_encode_backend_video_detail(self.videoInfo, serializer);
   }
 
   @protected
@@ -1112,7 +3194,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.hasMore, serializer);
     sse_encode_i_32(self.moreReqType, serializer);
     sse_encode_String(self.moreText, serializer);
-    sse_encode_list_vod_item(self.vlist, serializer);
+    sse_encode_list_recommend_vod_item(self.vlist, serializer);
   }
 
   @protected
@@ -1128,6 +3210,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_String(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_banner_item(
     List<BannerItem> self,
     SseSerializer serializer,
@@ -1136,6 +3227,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_banner_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_danmaku_item(
+    List<DanmakuItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_danmaku_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_episode(List<Episode> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_episode(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_episode_download_record(
+    List<EpisodeDownloadRecord> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_episode_download_record(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_episode_history_record(
+    List<EpisodeHistoryRecord> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_episode_history_record(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_favorite_record(
+    List<FavoriteRecord> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_favorite_record(item, serializer);
     }
   }
 
@@ -1152,6 +3300,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_play_source(
+    List<PlaySource> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_play_source(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -1162,11 +3322,62 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_vod_item(List<VodItem> self, SseSerializer serializer) {
+  void sse_encode_list_recommend_vod_item(
+    List<RecommendVodItem> self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
-      sse_encode_vod_item(item, serializer);
+      sse_encode_recommend_vod_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_record_string_string(
+    List<(String, String)> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_record_string_string(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_search_vod_item(
+    List<SearchVodItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_search_vod_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_vod_list_item(
+    List<VodListItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_vod_list_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_vod_player(
+    List<VodPlayer> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_vod_player(item, serializer);
     }
   }
 
@@ -1178,6 +3389,127 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (self != null) {
       sse_encode_String(self, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_episode_download_record(
+    EpisodeDownloadRecord? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_episode_download_record(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_episode_history_record(
+    EpisodeHistoryRecord? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_episode_history_record(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_usize(
+    BigInt? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_usize(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_list_vod_player(
+    List<VodPlayer>? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_vod_player(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_parse_video_result(
+    ParseVideoResult self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.url, serializer);
+    sse_encode_String(self.mediaType, serializer);
+  }
+
+  @protected
+  void sse_encode_play_source(PlaySource self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.parseApi, serializer);
+    sse_encode_list_episode(self.episodes, serializer);
+    sse_encode_bool(self.needResolve, serializer);
+    sse_encode_Map_String_String_None(self.headers, serializer);
+  }
+
+  @protected
+  void sse_encode_recommend_vod_item(
+    RecommendVodItem self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.vodId, serializer);
+    sse_encode_String(self.vodName, serializer);
+    sse_encode_String(self.vodPic, serializer);
+    sse_encode_String(self.vodRemarks, serializer);
+    sse_encode_i_32(self.typeId, serializer);
+  }
+
+  @protected
+  void sse_encode_record_string_string(
+    (String, String) self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.$1, serializer);
+    sse_encode_String(self.$2, serializer);
+  }
+
+  @protected
+  void sse_encode_search_request(SearchRequest self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(self.pg, serializer);
+    sse_encode_opt_box_autoadd_usize(self.tid, serializer);
+    sse_encode_String(self.text, serializer);
+    sse_encode_String(self.token, serializer);
+  }
+
+  @protected
+  void sse_encode_search_vod_item(
+    SearchVodItem self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.typeId, serializer);
+    sse_encode_i_64(self.vodId, serializer);
+    sse_encode_String(self.vodName, serializer);
+    sse_encode_String(self.vodActor, serializer);
+    sse_encode_String(self.vodArea, serializer);
+    sse_encode_String(self.vodLang, serializer);
+    sse_encode_String(self.vodPic, serializer);
+    sse_encode_String(self.vodRemarks, serializer);
+    sse_encode_String(self.vodYear, serializer);
   }
 
   @protected
@@ -1198,13 +3530,132 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_vod_item(VodItem self, SseSerializer serializer) {
+  void sse_encode_video_list_request(
+    VideoListRequest self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.vodId, serializer);
+    sse_encode_usize(self.pg, serializer);
+    sse_encode_usize(self.tid, serializer);
+    sse_encode_String(self.class_, serializer);
+    sse_encode_String(self.area, serializer);
+    sse_encode_String(self.lang, serializer);
+    sse_encode_String(self.year, serializer);
+    sse_encode_String(self.order, serializer);
+    sse_encode_String(self.token, serializer);
+  }
+
+  @protected
+  void sse_encode_vod_info(VodInfo self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.groupId, serializer);
+    sse_encode_i_32(self.typeId, serializer);
+    sse_encode_i_32(self.typeId1, serializer);
+    sse_encode_i_64(self.vodId, serializer);
+    sse_encode_String(self.vodName, serializer);
+    sse_encode_String(self.vodEn, serializer);
+    sse_encode_String(self.vodSub, serializer);
+    sse_encode_String(self.vodActor, serializer);
+    sse_encode_String(self.vodDirector, serializer);
+    sse_encode_String(self.vodWriter, serializer);
+    sse_encode_String(self.vodArea, serializer);
+    sse_encode_String(self.vodLang, serializer);
+    sse_encode_String(self.vodYear, serializer);
+    sse_encode_String(self.vodClass, serializer);
+    sse_encode_String(self.vodPic, serializer);
+    sse_encode_String(self.vodPicThumb, serializer);
+    sse_encode_String(self.vodPicSlide, serializer);
+    sse_encode_opt_String(self.vodPicScreenshot, serializer);
+    sse_encode_String(self.vodBlurb, serializer);
+    sse_encode_String(self.vodContent, serializer);
+    sse_encode_String(self.vodRemarks, serializer);
+    sse_encode_String(self.vodPubdate, serializer);
+    sse_encode_i_32(self.vodTotal, serializer);
+    sse_encode_String(self.vodSerial, serializer);
+    sse_encode_String(self.vodDuration, serializer);
+    sse_encode_String(self.vodScore, serializer);
+    sse_encode_i_32(self.vodScoreAll, serializer);
+    sse_encode_i_32(self.vodScoreNum, serializer);
+    sse_encode_i_64(self.vodDoubanId, serializer);
+    sse_encode_String(self.vodDoubanScore, serializer);
+    sse_encode_i_64(self.vodHits, serializer);
+    sse_encode_i_64(self.vodHitsDay, serializer);
+    sse_encode_i_64(self.vodHitsWeek, serializer);
+    sse_encode_i_64(self.vodHitsMonth, serializer);
+    sse_encode_i_64(self.vodUp, serializer);
+    sse_encode_i_64(self.vodDown, serializer);
+    sse_encode_i_32(self.vodStatus, serializer);
+    sse_encode_i_32(self.vodIsend, serializer);
+    sse_encode_i_32(self.vodLock, serializer);
+    sse_encode_i_32(self.vodLevel, serializer);
+    sse_encode_i_32(self.vodCopyright, serializer);
+    sse_encode_i_32(self.vodPoints, serializer);
+    sse_encode_i_32(self.vodPointsPlay, serializer);
+    sse_encode_i_32(self.vodPointsDown, serializer);
+    sse_encode_i_32(self.vodTrysee, serializer);
+    sse_encode_i_32(self.vodPlot, serializer);
+    sse_encode_String(self.vodPlotName, serializer);
+    sse_encode_String(self.vodPlotDetail, serializer);
+    sse_encode_String(self.vodPlayFrom, serializer);
+    sse_encode_String(self.vodPlayServer, serializer);
+    sse_encode_String(self.vodPlayNote, serializer);
+    sse_encode_String(self.vodPlayUrl, serializer);
+    sse_encode_String(self.vodDownFrom, serializer);
+    sse_encode_String(self.vodDownServer, serializer);
+    sse_encode_String(self.vodDownNote, serializer);
+    sse_encode_String(self.vodDownUrl, serializer);
+    sse_encode_String(self.vodJumpurl, serializer);
+    sse_encode_String(self.vodPwd, serializer);
+    sse_encode_String(self.vodPwdUrl, serializer);
+    sse_encode_String(self.vodPwdPlay, serializer);
+    sse_encode_String(self.vodPwdPlayUrl, serializer);
+    sse_encode_String(self.vodPwdDown, serializer);
+    sse_encode_String(self.vodPwdDownUrl, serializer);
+    sse_encode_String(self.vodRelVod, serializer);
+    sse_encode_String(self.vodRelArt, serializer);
+    sse_encode_String(self.vodTag, serializer);
+    sse_encode_String(self.vodLetter, serializer);
+    sse_encode_String(self.vodColor, serializer);
+    sse_encode_String(self.vodAuthor, serializer);
+    sse_encode_String(self.vodBehind, serializer);
+    sse_encode_String(self.vodState, serializer);
+    sse_encode_String(self.vodVersion, serializer);
+    sse_encode_String(self.vodWeekday, serializer);
+    sse_encode_String(self.vodTv, serializer);
+    sse_encode_String(self.vodTpl, serializer);
+    sse_encode_String(self.vodTplPlay, serializer);
+    sse_encode_String(self.vodTplDown, serializer);
+    sse_encode_String(self.vodReurl, serializer);
+    sse_encode_i_64(self.vodTime, serializer);
+    sse_encode_i_64(self.vodTimeAdd, serializer);
+    sse_encode_i_64(self.vodTimeHits, serializer);
+    sse_encode_i_64(self.vodTimeMake, serializer);
+    sse_encode_opt_list_vod_player(self.vodUrlWithPlayer, serializer);
+  }
+
+  @protected
+  void sse_encode_vod_list_item(VodListItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.typeId, serializer);
+    sse_encode_i_64(self.vodId, serializer);
     sse_encode_String(self.vodName, serializer);
     sse_encode_String(self.vodPic, serializer);
     sse_encode_String(self.vodRemarks, serializer);
-    sse_encode_i_32(self.typeId, serializer);
+  }
+
+  @protected
+  void sse_encode_vod_player(VodPlayer self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.url, serializer);
+    sse_encode_String(self.headers, serializer);
+    sse_encode_String(self.parseApi, serializer);
+    sse_encode_String(self.extraParseApi, serializer);
+    sse_encode_bool(self.parseSecret, serializer);
+    sse_encode_String(self.linkFeatures, serializer);
+    sse_encode_String(self.unLinkFeatures, serializer);
+    sse_encode_list_String(self.coreParams, serializer);
   }
 }
 
@@ -1227,32 +3678,43 @@ class ApiServiceImpl extends RustOpaque implements ApiService {
         RustLib.instance.api.rust_arc_decrement_strong_count_ApiServicePtr,
   );
 
-  Future<Value> fetchDanmakuList({required String groupKey}) =>
+  Future<List<DanmakuItem>> fetchDanmakuList({required String groupKey}) =>
       RustLib.instance.api.crateApiBearsApiApiServiceFetchDanmakuList(
         that: this,
         groupKey: groupKey,
       );
 
-  Future<Value> fetchDanmakuListByIds({
+  Future<List<DanmakuItem>> fetchDanmakuListByIds({
     required PlatformInt64 vodId,
-    required PlatformInt64 groupId,
+    required PlatformInt64 currentEpisode,
   }) => RustLib.instance.api.crateApiBearsApiApiServiceFetchDanmakuListByIds(
     that: this,
     vodId: vodId,
-    groupId: groupId,
+    currentEpisode: currentEpisode,
   );
 
   Future<HomeRecommendData> fetchHomeRecommend() => RustLib.instance.api
       .crateApiBearsApiApiServiceFetchHomeRecommend(that: this);
 
-  Future<Value> fetchVideoDetail({required int videoId}) => RustLib.instance.api
-      .crateApiBearsApiApiServiceFetchVideoDetail(that: this, videoId: videoId);
+  Future<String> fetchSpecifiedVideoUrl({
+    required String resolveUrl,
+    required Map<String, String> headers,
+  }) => RustLib.instance.api.crateApiBearsApiApiServiceFetchSpecifiedVideoUrl(
+    that: this,
+    resolveUrl: resolveUrl,
+    headers: headers,
+  );
 
-  Future<Value> fetchVideoList({required int tid, required int page}) =>
+  Future<FrontendVideoDetail> fetchVideoDetail({required int videoId}) =>
+      RustLib.instance.api.crateApiBearsApiApiServiceFetchVideoDetail(
+        that: this,
+        videoId: videoId,
+      );
+
+  Future<List<VodListItem>> fetchVideoList({required VideoListRequest req}) =>
       RustLib.instance.api.crateApiBearsApiApiServiceFetchVideoList(
         that: this,
-        tid: tid,
-        page: page,
+        req: req,
       );
 
   Future<String?> resolveEpisodeUrl({
@@ -1264,30 +3726,8 @@ class ApiServiceImpl extends RustOpaque implements ApiService {
     code: code,
   );
 
-  Future<Value> search({required String keyword, required int page}) =>
-      RustLib.instance.api.crateApiBearsApiApiServiceSearch(
-        that: this,
-        keyword: keyword,
-        page: page,
-      );
-}
-
-@sealed
-class ValueImpl extends RustOpaque implements Value {
-  // Not to be used by end users
-  ValueImpl.frbInternalDcoDecode(List<dynamic> wire)
-    : super.frbInternalDcoDecode(wire, _kStaticData);
-
-  // Not to be used by end users
-  ValueImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
-    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
-
-  static final _kStaticData = RustArcStaticData(
-    rustArcIncrementStrongCount:
-        RustLib.instance.api.rust_arc_increment_strong_count_Value,
-    rustArcDecrementStrongCount:
-        RustLib.instance.api.rust_arc_decrement_strong_count_Value,
-    rustArcDecrementStrongCountPtr:
-        RustLib.instance.api.rust_arc_decrement_strong_count_ValuePtr,
-  );
+  Future<List<SearchVodItem>> search({required SearchRequest req}) => RustLib
+      .instance
+      .api
+      .crateApiBearsApiApiServiceSearch(that: this, req: req);
 }

@@ -44,7 +44,7 @@ sealed class HomeVideoSection with _$HomeVideoSection {
     required bool hasMore,
     required int moreReqType,
     required String moreText,
-    required List<VodItem> vlist,
+    required List<RecommendVodItem> vlist,
   }) = _HomeVideoSection;
 
   factory HomeVideoSection.fromJson(Map<String, dynamic> json) =>
@@ -52,15 +52,15 @@ sealed class HomeVideoSection with _$HomeVideoSection {
 }
 
 @freezed
-sealed class VodItem with _$VodItem {
-  const factory VodItem({
+sealed class RecommendVodItem with _$RecommendVodItem {
+  const factory RecommendVodItem({
     required int vodId,
     required String vodName,
     required String vodPic,
     required String vodRemarks,
     required int typeId,
-  }) = _VodItem;
+  }) = _RecommendVodItem;
 
-  factory VodItem.fromJson(Map<String, dynamic> json) =>
-      _$VodItemFromJson(json);
+  factory RecommendVodItem.fromJson(Map<String, dynamic> json) =>
+      _$RecommendVodItemFromJson(json);
 }

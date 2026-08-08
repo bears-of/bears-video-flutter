@@ -4,25 +4,35 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import '../models/danmaku_item.dart';
+import '../models/episode.dart';
 import '../models/recommend_video.dart';
+import '../models/search_result.dart';
+import '../models/video_detail.dart';
+import '../models/video_list.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `extract_url`, `make_group_key`, `request`
+// These functions are ignored because they are not marked as `pub`: `extract_url`, `make_group_key`, `request_video`, `request`, `response_preview`, `to_header_map`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<ApiService>>
 abstract class ApiService implements RustOpaqueInterface {
-  Future<Value> fetchDanmakuList({required String groupKey});
+  Future<List<DanmakuItem>> fetchDanmakuList({required String groupKey});
 
-  Future<Value> fetchDanmakuListByIds({
+  Future<List<DanmakuItem>> fetchDanmakuListByIds({
     required PlatformInt64 vodId,
-    required PlatformInt64 groupId,
+    required PlatformInt64 currentEpisode,
   });
 
   Future<HomeRecommendData> fetchHomeRecommend();
 
-  Future<Value> fetchVideoDetail({required int videoId});
+  Future<String> fetchSpecifiedVideoUrl({
+    required String resolveUrl,
+    required Map<String, String> headers,
+  });
 
-  Future<Value> fetchVideoList({required int tid, required int page});
+  Future<FrontendVideoDetail> fetchVideoDetail({required int videoId});
+
+  Future<List<VodListItem>> fetchVideoList({required VideoListRequest req});
 
   // HINT: Make it `#[frb(sync)]` to let it become the default constructor of Dart class.
   static Future<ApiService> newInstance() =>
@@ -33,8 +43,5 @@ abstract class ApiService implements RustOpaqueInterface {
     required String code,
   });
 
-  Future<Value> search({required String keyword, required int page});
+  Future<List<SearchVodItem>> search({required SearchRequest req});
 }
-
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner< Value>>
-abstract class Value implements RustOpaqueInterface {}

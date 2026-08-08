@@ -1,10 +1,10 @@
 use aes::Aes128;
+use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use cbc::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
 use md5;
 use rand::RngExt;
 use regex::Regex;
-use anyhow::{Result, anyhow};
 
 type Aes128CbcEnc = cbc::Encryptor<Aes128>;
 type Aes128CbcDec = cbc::Decryptor<Aes128>;
@@ -53,7 +53,8 @@ impl CryptoService {
     pub fn decrypt_response(&self, response_text: &str) -> Result<String> {
         let magic_pos = response_text
             .rfind(RESPONSE_MAGIC)
-            .ok_or("MAGIC not found in response").map_err(|e| anyhow::anyhow!(e.to_string()))?;
+            .ok_or("MAGIC not found in response")
+            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
 
         let suffix_text = &response_text[magic_pos + RESPONSE_MAGIC.len()..];
         let suffix_raw = String::from_utf8(
