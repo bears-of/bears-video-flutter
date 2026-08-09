@@ -1,0 +1,184 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  FLUTTER_CHANNEL: stable
+
+jobs:
+  android:
+    name: Android APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build files
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Check platform imports
+        run: dart run tool/check_platform_imports.dart
+
+      - name: Build per-ABI APKs
+        run: flutter build apk --release --split-per-abi --target lib/main_mobile.dart
+
+      - name: Upload armeabi-v7a APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-armeabi-v7a
+          path: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload arm64-v8a APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-arm64-v8a
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload x86_64 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-x86_64
+          path: build/app/outputs/flutter-apk/app-x86_64-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Build universal APK
+        run: flutter build apk --release --target lib/main_mobile.dart
+
+      - name: Upload universal APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-universal
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  ios:
+    name: iOS (unsigned)
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build files
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Check platform imports
+        run: dart run tool/check_platform_imports.dart
+
+      - name: Build unsigned iOS app
+        run: flutter build ios --release --no-codesign --target lib/main_mobile.dart
+
+      - name: Package iOS app
+        run: ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app "$RUNNER_TEMP/bears-video-ios-unsigned.zip"
+
+      - name: Upload iOS app
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned
+          path: ${{ runner.temp }}/bears-video-ios-unsigned.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    name: Windows x64
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build files
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Check platform imports
+        run: dart run tool/check_platform_imports.dart
+
+      - name: Build Windows app
+        run: flutter build windows --release --target lib/main_desktop.dart
+
+      - name: Package Windows app
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "$env:RUNNER_TEMP/bears-video-windows-x64.zip"
+
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: ${{ runner.temp }}/bears-video-windows-x64.zip
+          if-no-files-found: error
+          retention-days: 14
