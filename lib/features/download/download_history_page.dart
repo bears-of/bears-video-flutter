@@ -1,3 +1,4 @@
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/common/widgets/app_button.dart';
 import 'package:bears_video/core/services/episode_download_repository.dart';
 import 'package:bears_video/features/download/download_episode_history_page.dart';
@@ -104,10 +105,7 @@ class DownloadHistoryPage extends HookConsumerWidget {
                   ),
                 ),
                 const Center(
-                  child: Text(
-                    '目前还没有下载视频哦',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  ),
+                  child: Text('目前还没有下载视频哦', style: TextStyle(fontSize: 18)),
                 ),
                 const SizedBox(height: 8),
                 Center(
@@ -211,7 +209,10 @@ class DownloadHistoryPage extends HookConsumerWidget {
                   child: const SizedBox.square(
                     dimension: 46,
                     child: Center(
-                      child: Icon(Icons.arrow_back_ios_new, size: 18),
+                      child: AppVectorIcon(
+                        AppVectorIcons.chevronLeft,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),
@@ -220,13 +221,21 @@ class DownloadHistoryPage extends HookConsumerWidget {
             centerTitle: true,
             title: const Text('我的下载', style: TextStyle(fontSize: 16)),
             actions: [
-              AppButton.ghost(
+              TextButton(
                 onPressed: records.isEmpty
                     ? null
                     : () {
                         isEditing.value = !isEditing.value;
                         selectedVideoIds.value = <int>{};
                       },
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  disabledForegroundColor: Colors.grey.shade400,
+                  overlayColor: Colors.transparent,
+                  minimumSize: const Size(48, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  textStyle: const TextStyle(fontSize: 14),
+                ),
                 child: Text(isEditing.value ? '取消' : '编辑'),
               ),
               const SizedBox(width: 8),
@@ -321,7 +330,7 @@ class _DownloadCover extends StatelessWidget {
         child: url.isEmpty
             ? const ColoredBox(
                 color: Color(0xFFE8E8E8),
-                child: Icon(Icons.movie_outlined),
+                child: AppVectorIcon(AppVectorIcons.film),
               )
             : CachedNetworkImage(
                 imageUrl: url,
@@ -330,7 +339,7 @@ class _DownloadCover extends StatelessWidget {
                     const ColoredBox(color: Color(0xFFE8E8E8)),
                 errorWidget: (_, _, _) => const ColoredBox(
                   color: Color(0xFFE8E8E8),
-                  child: Icon(Icons.broken_image_outlined),
+                  child: AppVectorIcon(AppVectorIcons.imageOff),
                 ),
               ),
       ),

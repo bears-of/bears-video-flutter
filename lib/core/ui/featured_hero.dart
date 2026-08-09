@@ -1,3 +1,4 @@
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/core/theme/app_colors.dart';
 import 'package:bears_video/src/rust/models/recommend_video.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +22,8 @@ class FeaturedHero extends StatelessWidget {
               return Container(
                 color: AppColors.surfaceMuted,
                 alignment: Alignment.center,
-                child: const Icon(
-                  Icons.movie_outlined,
+                child: const AppVectorIcon(
+                  AppVectorIcons.film,
                   size: 42,
                   color: AppColors.inkMuted,
                 ),
@@ -49,11 +50,7 @@ class FeaturedHero extends StatelessWidget {
                     item.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 22),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -67,18 +64,15 @@ class FeaturedHero extends StatelessWidget {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.play_arrow_rounded,
+                      AppVectorIcon(
+                        AppVectorIcons.play,
                         size: 20,
                         color: AppColors.primaryDark,
                       ),
                       SizedBox(width: 2),
                       Text(
                         '播放',
-                        style: TextStyle(
-                          color: AppColors.primaryDark,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: TextStyle(color: AppColors.primaryDark),
                       ),
                     ],
                   ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:battery_plus/battery_plus.dart';
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/common/platform/app_platform_controller.dart';
 import 'package:bears_video/core/theme/app_colors.dart';
 import 'package:bears_video/features/player/media_kit_player_controller.dart';
@@ -21,10 +22,12 @@ import 'package:volume_controller/volume_controller.dart';
 const _danmakuDurationSeconds = 24.0;
 const _danmakuLaneHeight = 26.0;
 const _danmakuGap = 16.0;
-const _drawerQuickDuration = Duration(milliseconds: 140);
 const _drawerMotionDuration = Duration(milliseconds: 220);
 const _controlsFadeDuration = Duration(milliseconds: 200);
 const _platformAdjustThrottle = Duration(milliseconds: 33);
+const _playbackSpeedOptions = <double>[0.75, 1.0, 1.25, 1.5, 2.0, 3.0];
+
+enum _FullScreenDrawerMode { episodes, playbackSpeed }
 
 class _ThrottledPlatformValueSetter {
   _ThrottledPlatformValueSetter(this.setter);
@@ -222,7 +225,6 @@ class _DanmakuOverlayState extends State<_DanmakuOverlay>
 
   static const _textStyle = TextStyle(
     fontSize: 14,
-    fontWeight: FontWeight.w600,
     // shadows: [
     //   Shadow(color: Colors.black, blurRadius: 3, offset: Offset(1, 1)),
     //   Shadow(color: Colors.black87, blurRadius: 2, offset: Offset(-1, -1)),
@@ -583,6 +585,12 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
     return "$hours:$minutes:$seconds";
   }
 
+  String _formatPlaybackSpeed(double speed) {
+    return speed == speed.truncateToDouble()
+        ? speed.toStringAsFixed(1)
+        : speed.toStringAsFixed(2).replaceFirst(RegExp(r'0$'), '');
+  }
+
   // ---------- 抽取的指示器组件 ----------
 
   /// 长按倍速指示器（3x）
@@ -600,11 +608,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
           ),
           child: const Text(
             '3倍速播放中',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 13),
           ),
         ),
       ),
@@ -626,11 +630,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
           ),
           child: Text(
             '${formatDuration(current)} / ${formatDuration(total)}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 13),
           ),
         ),
       ),
@@ -653,7 +653,11 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.brightness_7, color: Colors.white, size: 20),
+              const AppVectorIcon(
+                AppVectorIcons.sun,
+                color: Colors.white,
+                size: 20,
+              ),
               const SizedBox(height: 4),
               SizedBox(
                 width: 100,
@@ -697,8 +701,8 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                volume > 0 ? Icons.volume_up : Icons.volume_off,
+              AppVectorIcon(
+                volume > 0 ? AppVectorIcons.volume : AppVectorIcons.volumeOff,
                 color: Colors.white,
                 size: 20,
               ),
@@ -751,29 +755,19 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
 
     return Builder(
       builder: (drawerContext) {
-        return ColoredBox(
-          color: const Color(0xFF111512),
+        return DecoratedBox(
+          decoration: const BoxDecoration(
+            color: Color(0xFA101418),
+            border: Border(left: BorderSide(color: Colors.white12)),
+          ),
           child: SafeArea(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 12, 16),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 8, 10),
                   child: Row(
                     children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.video_library_rounded,
-                          color: Color(0xFF58D5B1),
-                          size: 21,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -782,13 +776,11 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                               '选集',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
                               ),
                             ),
-                            const SizedBox(height: 2),
                             Text(
-                              '${currentSource.name} · ${episodes.length} 集 · 当前 $currentEpisodeLabel',
+                              '${playSources.length} 个播放源 · ${episodes.length} 集',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -799,31 +791,68 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                           ],
                         ),
                       ),
-                      IconButton(
-                        tooltip: '关闭选集',
+                      _PlayerControlButton(
+                        semanticLabel: '关闭选集',
                         onPressed: () => Navigator.of(drawerContext).pop(),
-                        icon: const Icon(Icons.close_rounded),
-                        color: Colors.white70,
+                        child: const AppVectorIcon(
+                          AppVectorIcons.x,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const Divider(height: 1, color: Colors.white12),
+                if (episodes.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+                    child: Row(
+                      children: [
+                        const AppVectorIcon(
+                          AppVectorIcons.audioLines,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            currentEpisodeLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 120),
+                          child: Text(
+                            currentSource.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 9),
                   child: Row(
                     children: [
                       const Text(
                         '播放源',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 14),
                       ),
                       const Spacer(),
                       Text(
-                        '${playSources.length} 个可用源',
+                        '${playSources.length}',
                         style: const TextStyle(
                           color: Colors.white54,
                           fontSize: 12,
@@ -833,7 +862,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                   ),
                 ),
                 SizedBox(
-                  height: 46,
+                  height: 44,
                   child: ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     scrollDirection: Axis.horizontal,
@@ -842,6 +871,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                     itemBuilder: (context, index) {
                       final source = playSources[index];
                       return _buildDrawerSourceChip(
+                        context,
                         label: source.name,
                         episodeCount: source.episodes.length,
                         selected: sourceIndex == index,
@@ -853,50 +883,21 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 12),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 11),
                   child: Row(
                     children: [
                       const Text(
                         '剧集',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 17),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          '${episodes.length}',
-                          style: const TextStyle(
-                            color: Colors.white60,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      Text(
+                        '${episodes.length}',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
                         ),
                       ),
-                      const Spacer(),
-                      if (episodes.isNotEmpty)
-                        Flexible(
-                          child: Text(
-                            '正在播放 · $currentEpisodeLabel',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFF58D5B1),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -908,8 +909,8 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.video_library_outlined,
+                              AppVectorIcon(
+                                AppVectorIcons.library,
                                 color: Colors.white30,
                                 size: 38,
                               ),
@@ -938,9 +939,9 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                         context,
                       ).scale(12);
                       final preferredTileWidth =
-                          (widestLabelUnits * scaledFontSize + 32).clamp(
-                            120.0,
-                            240.0,
+                          (widestLabelUnits * scaledFontSize + 38).clamp(
+                            104.0,
+                            190.0,
                           );
                       final columns =
                           ((availableGridWidth + 10) /
@@ -953,11 +954,12 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                           crossAxisCount: columns,
                           mainAxisSpacing: 10,
                           crossAxisSpacing: 10,
-                          mainAxisExtent: 50,
+                          mainAxisExtent: 46,
                         ),
                         itemCount: episodes.length,
                         itemBuilder: (context, index) {
                           return _buildDrawerEpisodeTile(
+                            context,
                             label: episodes[index].label,
                             selected: episodeIndex == index,
                             onTap: () {
@@ -982,12 +984,167 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
     );
   }
 
-  Widget _buildDrawerSourceChip({
+  Widget _buildPlaybackSpeedDrawer(BuildContext context) {
+    return Builder(
+      builder: (drawerContext) {
+        return DecoratedBox(
+          decoration: const BoxDecoration(
+            color: Color(0xFA101418),
+            border: Border(left: BorderSide(color: Colors.white12)),
+          ),
+          child: SafeArea(
+            child: AnimatedBuilder(
+              animation: controller,
+              builder: (context, child) {
+                final currentSpeed = controller.value.playbackSpeed;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 8, 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '倍速',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                Text(
+                                  '当前 ${_formatPlaybackSpeed(currentSpeed)}x',
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _PlayerControlButton(
+                            semanticLabel: '关闭倍速选择',
+                            onPressed: () => Navigator.of(drawerContext).pop(),
+                            child: const AppVectorIcon(
+                              AppVectorIcons.x,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: Colors.white12),
+                    Expanded(
+                      child: GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 10,
+                              crossAxisSpacing: 10,
+                              mainAxisExtent: 48,
+                            ),
+                        itemCount: _playbackSpeedOptions.length,
+                        itemBuilder: (context, index) {
+                          final speed = _playbackSpeedOptions[index];
+                          final selected = (currentSpeed - speed).abs() < 0.001;
+                          return _buildDrawerSpeedTile(
+                            context,
+                            speed: speed,
+                            selected: selected,
+                            onTap: () {
+                              unawaited(controller.setPlaybackSpeed(speed));
+                              Navigator.of(drawerContext).pop();
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDrawerSpeedTile(
+    BuildContext context, {
+    required double speed,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : _drawerMotionDuration;
+    final label = '${_formatPlaybackSpeed(speed)}x';
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: selected ? '播放速度 $label，已选择' : '播放速度 $label',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: AnimatedContainer(
+            duration: duration,
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: selected ? 0.07 : 0.04),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: selected ? AppColors.primary : Colors.white24,
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 18,
+                  child: selected
+                      ? const AppVectorIcon(
+                          AppVectorIcons.check,
+                          size: 17,
+                          color: AppColors.primary,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.white70,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(width: 22),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerSourceChip(
+    BuildContext context, {
     required String label,
     required int episodeCount,
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : _drawerMotionDuration;
     return Semantics(
       button: true,
       selected: selected,
@@ -996,48 +1153,48 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(6),
           child: AnimatedContainer(
-            duration: _drawerMotionDuration,
+            duration: duration,
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 13),
+            constraints: const BoxConstraints(minHeight: 44),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: selected
-                  ? AppColors.primary.withValues(alpha: 0.20)
-                  : const Color(0xFF232824),
-              borderRadius: BorderRadius.circular(14),
+                  ? AppColors.primary.withValues(alpha: 0.12)
+                  : Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color: selected ? AppColors.primary : Colors.white10,
+                color: selected ? AppColors.primary : Colors.white24,
+                width: selected ? 1.5 : 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 AnimatedContainer(
-                  duration: _drawerQuickDuration,
+                  duration: duration,
                   width: selected ? 7 : 0,
                   height: 7,
                   margin: EdgeInsets.only(right: selected ? 7 : 0),
                   decoration: const BoxDecoration(
-                    color: Color(0xFF58D5B1),
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                 ),
                 Text(
                   label,
                   style: TextStyle(
-                    color: selected ? const Color(0xFF8CE8CC) : Colors.white70,
+                    color: selected ? Colors.white : Colors.white70,
                     fontSize: 13,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   '$episodeCount',
                   style: TextStyle(
-                    color: selected ? const Color(0xFF58D5B1) : Colors.white38,
+                    color: selected ? AppColors.primary : Colors.white38,
                     fontSize: 11,
-                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -1048,51 +1205,64 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
     );
   }
 
-  Widget _buildDrawerEpisodeTile({
+  Widget _buildDrawerEpisodeTile(
+    BuildContext context, {
     required String label,
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return Tooltip(
-      message: label,
-      waitDuration: const Duration(milliseconds: 450),
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: selected ? '$label，正在播放' : label,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(14),
-            child: AnimatedContainer(
-              duration: _drawerMotionDuration,
-              curve: Curves.easeOutCubic,
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.primary : const Color(0xFF232824),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: selected ? AppColors.primary : Colors.white10,
-                ),
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : _drawerMotionDuration;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: selected ? '$label，正在播放' : label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: AnimatedContainer(
+            duration: duration,
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.primary.withValues(alpha: 0.12)
+                  : Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: selected ? AppColors.primary : Colors.white24,
+                width: selected ? 1.5 : 1,
               ),
-              child: Center(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: selected
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.78),
-                    fontSize: 12,
-                    height: 1.18,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (selected) ...[
+                  const AppVectorIcon(
+                    AppVectorIcons.play,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 3),
+                ],
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: selected ? Colors.white : Colors.white70,
+                      fontSize: 12,
+                      height: 1.18,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -1109,6 +1279,10 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
     final isExitingFullScreen = useRef(false);
 
     final isSpeeding = useMemoized(() => ValueNotifier(false));
+    final speedBeforeLongPress = useRef(1.0);
+    final drawerMode = useMemoized(
+      () => ValueNotifier(_FullScreenDrawerMode.episodes),
+    );
 
     final isDragging = useMemoized(() => ValueNotifier(false));
     final dragProgress = useMemoized(() => ValueNotifier(Duration.zero));
@@ -1143,13 +1317,15 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
     final adjustStartValue = useRef(0.0); // 手势起始时的亮度/音量值
     final adjustStartY = useRef<double>(0);
     final currentTime = useMemoized(() => ValueNotifier(DateTime.now()));
-    final batteryLevel = useMemoized(() => ValueNotifier(100));
+    final batteryLevel = useMemoized(() => ValueNotifier<int?>(null));
+    final batteryState = useMemoized(() => ValueNotifier(BatteryState.unknown));
     final battery = useRef(Battery());
 
     useEffect(() {
       return () {
         controlsVisible.dispose();
         isSpeeding.dispose();
+        drawerMode.dispose();
         isDragging.dispose();
         dragProgress.dispose();
         sliderSeekPosition.dispose();
@@ -1159,6 +1335,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
         volume.dispose();
         currentTime.dispose();
         batteryLevel.dispose();
+        batteryState.dispose();
         brightnessSetter.dispose();
         volumeSetter.dispose();
       };
@@ -1236,31 +1413,48 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
     // 更新时间 & 监听电量
     useEffect(() {
       var cancelled = false;
-      // 定时器：每 30 秒更新时间与电量
-      final timer = Timer.periodic(const Duration(seconds: 30), (_) {
+
+      Future<void> refreshBattery() async {
+        try {
+          final level = await battery.value.batteryLevel;
+          if (!cancelled) {
+            batteryLevel.value = level < 0 ? null : level.clamp(0, 100).toInt();
+          }
+        } catch (_) {
+          if (!cancelled) batteryLevel.value = null;
+        }
+      }
+
+      Future<void> refreshBatteryState() async {
+        try {
+          final state = await battery.value.batteryState;
+          if (!cancelled) batteryState.value = state;
+        } catch (_) {
+          if (!cancelled) batteryState.value = BatteryState.unknown;
+        }
+      }
+
+      // battery_plus does not expose a level stream, so poll while fullscreen.
+      final timer = Timer.periodic(const Duration(seconds: 15), (_) {
         if (cancelled) return;
         currentTime.value = DateTime.now();
-        // 异步获取电量
-        battery.value.batteryLevel.then((level) {
-          if (cancelled) return;
-          batteryLevel.value = level;
-        });
+        unawaited(refreshBattery());
       });
 
-      // 初始化获取电量
-      battery.value.batteryLevel.then((level) {
-        if (cancelled) return;
-        batteryLevel.value = level;
-      });
+      unawaited(refreshBattery());
+      unawaited(refreshBatteryState());
 
-      // 监听电池状态变化（充电/放电），变化时立即刷新电量
       StreamSubscription<BatteryState>? stateSub;
-      stateSub = battery.value.onBatteryStateChanged.listen((state) {
-        battery.value.batteryLevel.then((level) {
+      stateSub = battery.value.onBatteryStateChanged.listen(
+        (state) {
           if (cancelled) return;
-          batteryLevel.value = level;
-        });
-      });
+          batteryState.value = state;
+          unawaited(refreshBattery());
+        },
+        onError: (_) {
+          if (!cancelled) batteryState.value = BatteryState.unknown;
+        },
+      );
 
       return () {
         cancelled = true;
@@ -1329,492 +1523,570 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
         child: Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.black,
-          endDrawer: playSources.isNotEmpty
-              ? Drawer(
-                  width: platformController.episodeDrawerWidth(
-                    MediaQuery.sizeOf(context).width,
+          endDrawer: Drawer(
+            width: platformController.episodeDrawerWidth(
+              MediaQuery.sizeOf(context).width,
+            ),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            clipBehavior: Clip.antiAlias,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.horizontal(left: Radius.circular(12)),
+            ),
+            child: ValueListenableBuilder<_FullScreenDrawerMode>(
+              valueListenable: drawerMode,
+              builder: (context, mode, child) {
+                return switch (mode) {
+                  _FullScreenDrawerMode.episodes => _buildEpisodeDrawer(
+                    context,
+                    ref,
                   ),
-                  elevation: 0,
-                  backgroundColor: Colors.transparent,
-                  clipBehavior: Clip.antiAlias,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.horizontal(
-                      left: Radius.circular(28),
-                    ),
-                  ),
-                  child: _buildEpisodeDrawer(context, ref),
-                )
-              : null,
-          body: GestureDetector(
-            behavior: HitTestBehavior.opaque,
+                  _FullScreenDrawerMode.playbackSpeed =>
+                    _buildPlaybackSpeedDrawer(context),
+                };
+              },
+            ),
+          ),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
 
-            // 手势处理
-            onTap: () {
-              if (controlsVisible.value) {
-                controlsVisible.value = false;
-                hideTimer.value?.cancel();
-              } else {
-                showControls();
-              }
-            },
-            onDoubleTap: () {
-              if (controller.value.isPlaying) {
-                controller.pause();
-              } else {
-                controller.play();
-              }
-            },
-            onLongPressStart: (_) {
-              controller.setPlaybackSpeed(3.0);
-              isSpeeding.value = true;
-            },
-            onLongPressEnd: (_) {
-              controller.setPlaybackSpeed(1.0);
-              isSpeeding.value = false;
-            },
-            onHorizontalDragStart: (details) {
-              ignoreHorizontalDrag.value = sliderPointerActive.value;
-              if (ignoreHorizontalDrag.value) return;
-              dragStartGlobalX.value = details.globalPosition.dx;
-              dragStartPositionMs.value = controller
-                  .value
-                  .position
-                  .inMilliseconds
-                  .toDouble();
-              isDragging.value = true;
-            },
-            onHorizontalDragUpdate: (details) {
-              if (ignoreHorizontalDrag.value) return;
-              final deltaX = details.globalPosition.dx - dragStartGlobalX.value;
-              final screenWidth = MediaQuery.of(context).size.width;
-              final seekSeconds = calculateSeekSeconds(deltaX, screenWidth);
-              final targetMs = dragStartPositionMs.value + seekSeconds * 1000;
-              final clampedMs = targetMs.clamp(
-                0,
-                controller.value.duration.inMilliseconds.toDouble(),
-              );
-              dragProgress.value = Duration(milliseconds: clampedMs.toInt());
-            },
-            onHorizontalDragEnd: (_) {
-              if (ignoreHorizontalDrag.value) {
-                ignoreHorizontalDrag.value = false;
-                return;
-              }
-              isDragging.value = false;
-              unawaited(controller.seekTo(dragProgress.value));
-            },
-            onHorizontalDragCancel: () {
-              ignoreHorizontalDrag.value = false;
-              isDragging.value = false;
-            },
+                // 手势处理
+                onTap: () {
+                  if (controlsVisible.value) {
+                    controlsVisible.value = false;
+                    hideTimer.value?.cancel();
+                  } else {
+                    showControls();
+                  }
+                },
+                onDoubleTap: () {
+                  if (controller.value.isPlaying) {
+                    controller.pause();
+                  } else {
+                    controller.play();
+                  }
+                },
+                onLongPressStart: (_) {
+                  speedBeforeLongPress.value = controller.value.playbackSpeed;
+                  controller.setPlaybackSpeed(3.0);
+                  isSpeeding.value = true;
+                },
+                onLongPressEnd: (_) {
+                  controller.setPlaybackSpeed(speedBeforeLongPress.value);
+                  isSpeeding.value = false;
+                },
+                onHorizontalDragStart: (details) {
+                  ignoreHorizontalDrag.value = sliderPointerActive.value;
+                  if (ignoreHorizontalDrag.value) return;
+                  dragStartGlobalX.value = details.globalPosition.dx;
+                  dragStartPositionMs.value = controller
+                      .value
+                      .position
+                      .inMilliseconds
+                      .toDouble();
+                  isDragging.value = true;
+                },
+                onHorizontalDragUpdate: (details) {
+                  if (ignoreHorizontalDrag.value) return;
+                  final deltaX =
+                      details.globalPosition.dx - dragStartGlobalX.value;
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final seekSeconds = calculateSeekSeconds(deltaX, screenWidth);
+                  final targetMs =
+                      dragStartPositionMs.value + seekSeconds * 1000;
+                  final clampedMs = targetMs.clamp(
+                    0,
+                    controller.value.duration.inMilliseconds.toDouble(),
+                  );
+                  dragProgress.value = Duration(
+                    milliseconds: clampedMs.toInt(),
+                  );
+                },
+                onHorizontalDragEnd: (_) {
+                  if (ignoreHorizontalDrag.value) {
+                    ignoreHorizontalDrag.value = false;
+                    return;
+                  }
+                  isDragging.value = false;
+                  unawaited(controller.seekTo(dragProgress.value));
+                },
+                onHorizontalDragCancel: () {
+                  ignoreHorizontalDrag.value = false;
+                  isDragging.value = false;
+                },
 
-            // ========== 垂直拖动：亮度/音量调节 ==========
-            onVerticalDragStart: (details) {
-              final screenWidth = MediaQuery.of(context).size.width;
-              final isLeft = details.localPosition.dx < screenWidth / 2;
-              if (isLeft) {
-                isAdjustingBrightness.value = true;
-                adjustStartValue.value = brightness.value;
-              } else {
-                isAdjustingVolume.value = true;
-                adjustStartValue.value = volume.value;
-              }
-              adjustStartY.value = details.globalPosition.dy;
-            },
-            onVerticalDragUpdate: (details) {
-              final screenHeight = MediaQuery.of(context).size.height;
-              // 拖动距离占屏幕高度的比例，转换为数值变化（上滑增加，下滑减少）
-              final dy = adjustStartY.value - details.globalPosition.dy;
-              final ratio = dy / screenHeight;
-              final newValue = (adjustStartValue.value + ratio).clamp(0.0, 1.0);
+                // ========== 垂直拖动：亮度/音量调节 ==========
+                onVerticalDragStart: (details) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final isLeft = details.localPosition.dx < screenWidth / 2;
+                  if (isLeft) {
+                    isAdjustingBrightness.value = true;
+                    adjustStartValue.value = brightness.value;
+                  } else {
+                    isAdjustingVolume.value = true;
+                    adjustStartValue.value = volume.value;
+                  }
+                  adjustStartY.value = details.globalPosition.dy;
+                },
+                onVerticalDragUpdate: (details) {
+                  final screenHeight = MediaQuery.of(context).size.height;
+                  // 拖动距离占屏幕高度的比例，转换为数值变化（上滑增加，下滑减少）
+                  final dy = adjustStartY.value - details.globalPosition.dy;
+                  final ratio = dy / screenHeight;
+                  final newValue = (adjustStartValue.value + ratio).clamp(
+                    0.0,
+                    1.0,
+                  );
 
-              if (isAdjustingBrightness.value) {
-                brightness.value = newValue;
-                ref.read(screenBrightnessProvider.notifier).state = newValue;
-                brightnessSetter.set(newValue);
-              } else if (isAdjustingVolume.value) {
-                volume.value = newValue;
-                ref.read(volumeProvider.notifier).state = newValue;
-                volumeSetter.set(newValue);
-              }
-            },
-            onVerticalDragEnd: (_) {
-              brightnessSetter.flush();
-              volumeSetter.flush();
-              isAdjustingBrightness.value = false;
-              isAdjustingVolume.value = false;
-            },
-            onVerticalDragCancel: () {
-              brightnessSetter.flush();
-              volumeSetter.flush();
-              isAdjustingBrightness.value = false;
-              isAdjustingVolume.value = false;
-            },
+                  if (isAdjustingBrightness.value) {
+                    brightness.value = newValue;
+                    ref.read(screenBrightnessProvider.notifier).state =
+                        newValue;
+                    brightnessSetter.set(newValue);
+                  } else if (isAdjustingVolume.value) {
+                    volume.value = newValue;
+                    ref.read(volumeProvider.notifier).state = newValue;
+                    volumeSetter.set(newValue);
+                  }
+                },
+                onVerticalDragEnd: (_) {
+                  brightnessSetter.flush();
+                  volumeSetter.flush();
+                  isAdjustingBrightness.value = false;
+                  isAdjustingVolume.value = false;
+                },
+                onVerticalDragCancel: () {
+                  brightnessSetter.flush();
+                  volumeSetter.flush();
+                  isAdjustingBrightness.value = false;
+                  isAdjustingVolume.value = false;
+                },
 
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // 视频画面
-                videoWidget,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // 视频画面
+                    videoWidget,
 
-                if (showDanmaku && danmakuItems.isNotEmpty)
-                  _DanmakuOverlay(controller: controller, items: danmakuItems),
-
-                // 缓冲加载指示器
-                Positioned(
-                  top: 70,
-                  left: 0,
-                  right: 0,
-                  child: AnimatedBuilder(
-                    animation: Listenable.merge([
-                      controller,
-                      isSpeeding,
-                      isDragging,
-                    ]),
-                    builder: (context, child) {
-                      final value = controller.value;
-                      if (!value.isInitialized ||
-                          !value.isBuffering ||
-                          isSpeeding.value ||
-                          isDragging.value) {
-                        return const SizedBox.shrink();
-                      }
-                      return child!;
-                    },
-                    child: const Center(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.all(Radius.circular(18)),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          child: Text(
-                            '正在缓冲...',
-                            style: TextStyle(color: Colors.white, fontSize: 13),
-                          ),
-                        ),
+                    if (showDanmaku && danmakuItems.isNotEmpty)
+                      _DanmakuOverlay(
+                        controller: controller,
+                        items: danmakuItems,
                       ),
-                    ),
-                  ),
+                  ],
                 ),
+              ),
 
-                // 抽取的指示器：倍速 / 拖拽进度（同一位置，互斥显示）
-                AnimatedBuilder(
+              // 缓冲加载指示器
+              Positioned(
+                top: 70,
+                left: 0,
+                right: 0,
+                child: AnimatedBuilder(
                   animation: Listenable.merge([
+                    controller,
                     isSpeeding,
                     isDragging,
-                    dragProgress,
                   ]),
-                  builder: (context, child) => Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (isSpeeding.value) _buildSpeedIndicator(),
-                      if (isDragging.value)
-                        _buildSeekIndicator(
-                          dragProgress.value,
-                          controller.value.duration,
+                  builder: (context, child) {
+                    final value = controller.value;
+                    if (!value.isInitialized ||
+                        !value.isBuffering ||
+                        isSpeeding.value ||
+                        isDragging.value) {
+                      return const SizedBox.shrink();
+                    }
+                    return child!;
+                  },
+                  child: const Center(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.all(Radius.circular(18)),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
                         ),
-                    ],
+                        child: Text(
+                          '正在缓冲...',
+                          style: TextStyle(color: Colors.white, fontSize: 13),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
+              ),
 
-                // 亮度 / 音量指示器
-                AnimatedBuilder(
+              // 抽取的指示器：倍速 / 拖拽进度（同一位置，互斥显示）
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  isSpeeding,
+                  isDragging,
+                  dragProgress,
+                ]),
+                builder: (context, child) => Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (isSpeeding.value) _buildSpeedIndicator(),
+                    if (isDragging.value)
+                      _buildSeekIndicator(
+                        dragProgress.value,
+                        controller.value.duration,
+                      ),
+                  ],
+                ),
+              ),
+
+              // 亮度 / 音量指示器
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  isAdjustingBrightness,
+                  isAdjustingVolume,
+                  brightness,
+                  volume,
+                ]),
+                builder: (context, child) => Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (isAdjustingBrightness.value)
+                      _buildBrightnessIndicator(brightness.value),
+                    if (isAdjustingVolume.value)
+                      _buildVolumeIndicator(volume.value),
+                  ],
+                ),
+              ),
+
+              // 顶部信息栏（包含返回、剧名/集数、时间、电量）
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: AnimatedBuilder(
                   animation: Listenable.merge([
-                    isAdjustingBrightness,
-                    isAdjustingVolume,
-                    brightness,
-                    volume,
+                    controlsVisible,
+                    currentTime,
+                    batteryLevel,
+                    batteryState,
                   ]),
-                  builder: (context, child) => Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (isAdjustingBrightness.value)
-                        _buildBrightnessIndicator(brightness.value),
-                      if (isAdjustingVolume.value)
-                        _buildVolumeIndicator(volume.value),
-                    ],
-                  ),
-                ),
-
-                // 顶部信息栏（包含返回、剧名/集数、时间、电量）
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: AnimatedBuilder(
-                    animation: Listenable.merge([
-                      controlsVisible,
-                      currentTime,
-                      batteryLevel,
-                    ]),
-                    builder: (context, child) {
-                      final visible = controlsVisible.value;
-                      return AnimatedOpacity(
-                        opacity: visible ? 1.0 : 0.0,
-                        duration: _controlsFadeDuration,
-                        child: IgnorePointer(
-                          ignoring: !visible,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Colors.black87, Colors.transparent],
-                              ),
-                            ),
-                            child: SafeArea(
-                              bottom: false,
-                              child: _FullScreenTopBar(
-                                videoTitle: videoTitle,
-                                episodeLabel: episodeLabel,
-                                currentTime: currentTime.value,
-                                batteryLevel: batteryLevel.value,
-                                onBack: () => exitFullScreen(context),
-                              ),
+                  builder: (context, child) {
+                    final visible = controlsVisible.value;
+                    final fadeDuration = MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : _controlsFadeDuration;
+                    return AnimatedOpacity(
+                      opacity: visible ? 1.0 : 0.0,
+                      duration: fadeDuration,
+                      child: IgnorePointer(
+                        ignoring: !visible,
+                        child: Container(
+                          color: Colors.transparent,
+                          child: SafeArea(
+                            bottom: false,
+                            child: _FullScreenTopBar(
+                              videoTitle: videoTitle,
+                              episodeLabel: episodeLabel,
+                              currentTime: currentTime.value,
+                              batteryLevel: batteryLevel.value,
+                              batteryState: batteryState.value,
+                              onBack: () => exitFullScreen(context),
                             ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-
-                // 底部控制栏（两行布局）
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: controlsVisible,
-                    builder: (context, visible, child) => AnimatedOpacity(
-                      opacity: visible ? 1.0 : 0.0,
-                      duration: _controlsFadeDuration,
-                      child: IgnorePointer(ignoring: !visible, child: child),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black54,
-                            Colors.black87,
-                          ],
-                        ),
                       ),
-                      child: SafeArea(
-                        top: false,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // 第一行：进度条 + 时间
-                            AnimatedBuilder(
-                              animation: Listenable.merge([
-                                controller,
-                                sliderSeekPosition,
-                              ]),
-                              builder: (context, child) {
-                                final value = controller.value;
-                                final durationMs = value.duration.inMilliseconds
-                                    .toDouble();
-                                final displayPosition =
-                                    sliderSeekPosition.value ?? value.position;
-                                return Row(
+                    );
+                  },
+                ),
+              ),
+
+              // 底部控制栏（两行布局）
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: controlsVisible,
+                  builder: (context, visible, child) {
+                    final fadeDuration = MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : _controlsFadeDuration;
+                    return AnimatedOpacity(
+                      opacity: visible ? 1.0 : 0.0,
+                      duration: fadeDuration,
+                      child: IgnorePointer(ignoring: !visible, child: child),
+                    );
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                    child: SafeArea(
+                      top: false,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final compact = constraints.maxWidth < 600;
+                          final horizontalPadding = compact ? 12.0 : 24.0;
+                          return Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // 第一行：进度条 + 时间
+                                AnimatedBuilder(
+                                  animation: Listenable.merge([
+                                    controller,
+                                    sliderSeekPosition,
+                                  ]),
+                                  builder: (context, child) {
+                                    final value = controller.value;
+                                    final durationMs = value
+                                        .duration
+                                        .inMilliseconds
+                                        .toDouble();
+                                    final displayPosition =
+                                        sliderSeekPosition.value ??
+                                        value.position;
+                                    final sliderMax = durationMs
+                                        .clamp(1, double.infinity)
+                                        .toDouble();
+                                    final displayPositionMs = displayPosition
+                                        .inMilliseconds
+                                        .toDouble()
+                                        .clamp(0, sliderMax)
+                                        .toDouble();
+                                    final bufferedMs = math
+                                        .max(
+                                          displayPositionMs,
+                                          value.buffer.inMilliseconds
+                                              .toDouble(),
+                                        )
+                                        .clamp(0, sliderMax)
+                                        .toDouble();
+                                    return Row(
+                                      children: [
+                                        Text(
+                                          formatDuration(displayPosition),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        SizedBox(width: compact ? 4 : 10),
+                                        Expanded(
+                                          child: Listener(
+                                            onPointerDown: (_) {
+                                              sliderPointerActive.value = true;
+                                            },
+                                            onPointerUp: (_) {
+                                              sliderPointerActive.value = false;
+                                            },
+                                            onPointerCancel: (_) {
+                                              sliderPointerActive.value = false;
+                                              sliderSeekPosition.value = null;
+                                            },
+                                            child: SliderTheme(
+                                              data: SliderTheme.of(context).copyWith(
+                                                trackHeight: 4,
+                                                thumbShape:
+                                                    const RoundSliderThumbShape(
+                                                      enabledThumbRadius: 7,
+                                                    ),
+                                                overlayShape:
+                                                    const RoundSliderOverlayShape(
+                                                      overlayRadius: 18,
+                                                    ),
+                                                activeTrackColor: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                                secondaryActiveTrackColor:
+                                                    Colors.white54,
+                                                inactiveTrackColor:
+                                                    Colors.white24,
+                                                thumbColor: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                              ),
+                                              child: Slider(
+                                                value: displayPositionMs,
+                                                max: sliderMax,
+                                                secondaryTrackValue: bufferedMs,
+                                                onChangeStart: (value) {
+                                                  sliderSeekPosition
+                                                      .value = Duration(
+                                                    milliseconds: value.toInt(),
+                                                  );
+                                                },
+                                                onChanged: (value) {
+                                                  sliderSeekPosition
+                                                      .value = Duration(
+                                                    milliseconds: value.toInt(),
+                                                  );
+                                                },
+                                                onChangeEnd: (value) async {
+                                                  final position = Duration(
+                                                    milliseconds: value.toInt(),
+                                                  );
+                                                  sliderSeekPosition.value =
+                                                      position;
+                                                  await controller.seekTo(
+                                                    position,
+                                                  );
+                                                  if (context.mounted) {
+                                                    sliderSeekPosition.value =
+                                                        null;
+                                                  }
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: compact ? 4 : 10),
+                                        Text(
+                                          formatDuration(value.duration),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                // 第二行：控制按钮
+                                Row(
                                   children: [
-                                    Text(
-                                      formatDuration(displayPosition),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
+                                    // 播放/暂停按钮
+                                    AnimatedBuilder(
+                                      animation: controller,
+                                      builder: (context, child) {
+                                        final isPlaying =
+                                            controller.value.isPlaying;
+                                        return _PlayerControlButton(
+                                          semanticLabel: isPlaying
+                                              ? '暂停'
+                                              : '播放',
+                                          prominent: true,
+                                          onPressed: () {
+                                            if (isPlaying) {
+                                              controller.pause();
+                                            } else {
+                                              controller.play();
+                                            }
+                                          },
+                                          child: child!,
+                                        );
+                                      },
+                                      child: _PlaybackStateIcon(
+                                        controller: controller,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Listener(
-                                        onPointerDown: (_) {
-                                          sliderPointerActive.value = true;
-                                        },
-                                        onPointerUp: (_) {
-                                          sliderPointerActive.value = false;
-                                        },
-                                        onPointerCancel: (_) {
-                                          sliderPointerActive.value = false;
-                                          sliderSeekPosition.value = null;
-                                        },
-                                        child: SliderTheme(
-                                          data: SliderTheme.of(context).copyWith(
-                                            trackHeight: 3,
-                                            thumbShape:
-                                                const RoundSliderThumbShape(
-                                                  enabledThumbRadius: 6,
-                                                ),
-                                            overlayShape:
-                                                const RoundSliderOverlayShape(
-                                                  overlayRadius: 12,
-                                                ),
-                                            activeTrackColor: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                            inactiveTrackColor: Colors.white24,
-                                            thumbColor: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                          ),
-                                          child: Slider(
-                                            value: displayPosition
-                                                .inMilliseconds
-                                                .toDouble()
-                                                .clamp(0, durationMs),
-                                            max: durationMs.clamp(
-                                              1,
-                                              double.infinity,
+                                    const SizedBox(width: 6),
+                                    // 弹幕按钮
+                                    _PlayerControlButton(
+                                      semanticLabel:
+                                          ref.watch(danmakuEnabledProvider)
+                                          ? '关闭弹幕'
+                                          : '开启弹幕',
+                                      selected: ref.watch(
+                                        danmakuEnabledProvider,
+                                      ),
+                                      onPressed: () {
+                                        ref
+                                            .read(
+                                              danmakuEnabledProvider.notifier,
+                                            )
+                                            .update((state) => !state);
+                                      },
+                                      child: ref.watch(danmakuEnabledProvider)
+                                          ? SvgPicture.string(
+                                              BearsSVG.danmakuLineSVG,
+                                              colorFilter:
+                                                  const ColorFilter.mode(
+                                                    Color(0xFF8DBBFA),
+                                                    BlendMode.srcIn,
+                                                  ),
+                                              height: 22,
+                                              width: 22,
+                                            )
+                                          : SvgPicture.string(
+                                              BearsSVG.danmakuOffLineSVG,
+                                              colorFilter:
+                                                  const ColorFilter.mode(
+                                                    Colors.white,
+                                                    BlendMode.srcIn,
+                                                  ),
+                                              height: 22,
+                                              width: 22,
                                             ),
-                                            onChangeStart: (value) {
-                                              sliderSeekPosition.value =
-                                                  Duration(
-                                                    milliseconds: value.toInt(),
-                                                  );
-                                            },
-                                            onChanged: (value) {
-                                              sliderSeekPosition.value =
-                                                  Duration(
-                                                    milliseconds: value.toInt(),
-                                                  );
-                                            },
-                                            onChangeEnd: (value) async {
-                                              final position = Duration(
-                                                milliseconds: value.toInt(),
-                                              );
-                                              sliderSeekPosition.value =
-                                                  position;
-                                              await controller.seekTo(position);
-                                              if (context.mounted) {
-                                                sliderSeekPosition.value = null;
-                                              }
-                                            },
-                                          ),
+                                    ),
+                                    // 将退出全屏推到最右侧
+                                    const Spacer(),
+
+                                    AnimatedBuilder(
+                                      animation: controller,
+                                      builder: (context, child) {
+                                        final speed =
+                                            controller.value.playbackSpeed;
+                                        return _PlayerLabeledControl(
+                                          semanticLabel:
+                                              '选择播放速度，当前 ${_formatPlaybackSpeed(speed)} 倍',
+                                          label:
+                                              '倍速 ${_formatPlaybackSpeed(speed)}x',
+                                          onPressed: () {
+                                            drawerMode.value =
+                                                _FullScreenDrawerMode
+                                                    .playbackSpeed;
+                                            _scaffoldKey.currentState
+                                                ?.openEndDrawer();
+                                          },
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(width: 6),
+
+                                    // 选集按钮（有数据时显示）
+                                    if (playSources.isNotEmpty)
+                                      _PlayerLabeledControl(
+                                        semanticLabel: '打开选集',
+                                        label: '选集',
+                                        onPressed: () {
+                                          drawerMode.value =
+                                              _FullScreenDrawerMode.episodes;
+                                          _scaffoldKey.currentState
+                                              ?.openEndDrawer();
+                                        },
+                                      ),
+                                    if (playSources.isNotEmpty)
+                                      const SizedBox(width: 6),
+                                    _PlayerControlButton(
+                                      semanticLabel: '退出全屏',
+                                      onPressed: () => exitFullScreen(context),
+                                      child: SvgPicture.string(
+                                        BearsSVG.exitFullScreenSVG,
+                                        width: 22,
+                                        height: 22,
+                                        colorFilter: const ColorFilter.mode(
+                                          Colors.white,
+                                          BlendMode.srcIn,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      formatDuration(value.duration),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                      ),
-                                    ),
                                   ],
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 4),
-                            // 第二行：控制按钮
-                            Row(
-                              children: [
-                                // 播放/暂停按钮
-                                GestureDetector(
-                                  onTap: () {
-                                    if (controller.value.isPlaying) {
-                                      controller.pause();
-                                    } else {
-                                      controller.play();
-                                    }
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: _PlaybackStateIcon(
-                                      controller: controller,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                // 弹幕按钮
-                                GestureDetector(
-                                  onTap: () {
-                                    ref
-                                        .read(danmakuEnabledProvider.notifier)
-                                        .update((state) => !state);
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: ref.watch(danmakuEnabledProvider)
-                                        ? SvgPicture.string(
-                                            BearsSVG.danmakuLineSVG,
-                                            colorFilter: ColorFilter.mode(
-                                              AppColors.primary.withValues(
-                                                alpha: 0.9,
-                                              ),
-                                              BlendMode.srcIn,
-                                            ),
-                                            height: 22,
-                                            width: 22,
-                                          )
-                                        : SvgPicture.string(
-                                            BearsSVG.danmakuOffLineSVG,
-                                            colorFilter: ColorFilter.mode(
-                                              Colors.white,
-                                              BlendMode.srcIn,
-                                            ),
-                                            height: 22,
-                                            width: 22,
-                                          ),
-                                  ),
-                                ),
-
-                                // 将退出全屏推到最右侧
-                                const Spacer(),
-
-                                // 选集按钮（有数据时显示）
-                                if (playSources.isNotEmpty)
-                                  GestureDetector(
-                                    onTap: () {
-                                      _scaffoldKey.currentState
-                                          ?.openEndDrawer();
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4),
-                                      child: Text(
-                                        '选集',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                const SizedBox(width: 8),
-                                InkWell(
-                                  borderRadius: BorderRadius.circular(20),
-                                  onTap: () => exitFullScreen(context),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: SvgPicture.string(
-                                      BearsSVG.exitFullScreenSVG,
-                                      width: 22,
-                                      height: 22,
-                                      colorFilter: const ColorFilter.mode(
-                                        Colors.white,
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                  ),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1874,94 +2146,339 @@ class _PlaybackStateIconState extends State<_PlaybackStateIcon> {
   }
 }
 
+class _PlayerControlButton extends StatefulWidget {
+  const _PlayerControlButton({
+    required this.semanticLabel,
+    required this.onPressed,
+    required this.child,
+    this.selected = false,
+    this.prominent = false,
+  });
+
+  final String semanticLabel;
+  final VoidCallback onPressed;
+  final Widget child;
+  final bool selected;
+  final bool prominent;
+
+  @override
+  State<_PlayerControlButton> createState() => _PlayerControlButtonState();
+}
+
+class _PlayerControlButtonState extends State<_PlayerControlButton> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final dimension = widget.prominent ? 48.0 : 44.0;
+    return Semantics(
+      button: true,
+      selected: widget.selected,
+      label: widget.semanticLabel,
+      child: FocusableActionDetector(
+        onShowFocusHighlight: (value) => setState(() => _focused = value),
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onPressed();
+              return null;
+            },
+          ),
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onPressed,
+          child: SizedBox.square(
+            dimension: dimension,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                widget.child,
+                if (_focused)
+                  const Positioned(
+                    left: 10,
+                    right: 10,
+                    bottom: 3,
+                    child: SizedBox(
+                      height: 2,
+                      child: ColoredBox(color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlayerLabeledControl extends StatefulWidget {
+  const _PlayerLabeledControl({
+    required this.semanticLabel,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final String semanticLabel;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  State<_PlayerLabeledControl> createState() => _PlayerLabeledControlState();
+}
+
+class _PlayerLabeledControlState extends State<_PlayerLabeledControl> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: widget.semanticLabel,
+      child: FocusableActionDetector(
+        onShowFocusHighlight: (value) => setState(() => _focused = value),
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onPressed();
+              return null;
+            },
+          ),
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onPressed,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 52, minHeight: 44),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    widget.label,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                  if (_focused)
+                    const Positioned(
+                      left: 2,
+                      right: 2,
+                      bottom: 3,
+                      child: SizedBox(
+                        height: 2,
+                        child: ColoredBox(color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _FullScreenTopBar extends StatelessWidget {
   const _FullScreenTopBar({
     required this.videoTitle,
     required this.episodeLabel,
     required this.currentTime,
     required this.batteryLevel,
+    required this.batteryState,
     required this.onBack,
   });
 
   final String? videoTitle;
   final String? episodeLabel;
   final DateTime currentTime;
-  final int batteryLevel;
+  final int? batteryLevel;
+  final BatteryState batteryState;
   final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: onBack,
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 6),
-            child: Icon(
-              Icons.arrow_back_ios_new,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-        ),
-        if (videoTitle != null && videoTitle!.isNotEmpty) ...[
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(text: videoTitle!),
-                  if (episodeLabel != null && episodeLabel!.isNotEmpty)
-                    TextSpan(
-                      text: ' · $episodeLabel',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 600;
+        final hasTitle = videoTitle != null && videoTitle!.trim().isNotEmpty;
+        final hasEpisode =
+            episodeLabel != null && episodeLabel!.trim().isNotEmpty;
+        final time =
+            '${currentTime.hour.toString().padLeft(2, '0')}:${currentTime.minute.toString().padLeft(2, '0')}';
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 18),
+          child: SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      _PlayerControlButton(
+                        semanticLabel: '返回',
+                        onPressed: onBack,
+                        child: const AppVectorIcon(
+                          AppVectorIcons.chevronLeft,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: hasTitle
+                            ? Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    videoTitle!.trim(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: compact ? 14 : 15,
+                                    ),
+                                  ),
+                                  if (hasEpisode)
+                                    Text(
+                                      episodeLabel!.trim(),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  width: 64,
+                  child: Semantics(
+                    label: '时间 $time',
+                    excludeSemantics: true,
+                    child: Center(
+                      child: Text(
+                        time,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                ],
+                  ),
+                ),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _PlayerStatus(
+                      batteryLevel: batteryLevel,
+                      batteryState: batteryState,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PlayerStatus extends StatelessWidget {
+  const _PlayerStatus({required this.batteryLevel, required this.batteryState});
+
+  final int? batteryLevel;
+  final BatteryState batteryState;
+
+  @override
+  Widget build(BuildContext context) {
+    final level = batteryLevel;
+    final charging =
+        batteryState == BatteryState.charging ||
+        batteryState == BatteryState.full;
+    final connectedNotCharging =
+        batteryState == BatteryState.connectedNotCharging;
+    final levelLabel = level == null ? '不可用' : '$level%';
+    return Semantics(
+      container: true,
+      label:
+          '电量 $levelLabel${charging
+              ? '，正在充电'
+              : connectedNotCharging
+              ? '，已连接电源'
+              : ''}',
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            level == null ? '--%' : '$level%',
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
+          ),
+          const SizedBox(width: 4),
+          if (charging || connectedNotCharging) ...[
+            AppVectorIcon(
+              charging ? AppVectorIcons.zap : AppVectorIcons.power,
+              size: 13,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 2),
+          ],
+          _LiveBatteryIcon(level: level),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveBatteryIcon extends StatelessWidget {
+  const _LiveBatteryIcon({required this.level});
+
+  final int? level;
+
+  @override
+  Widget build(BuildContext context) {
+    final fill = ((level ?? 0) / 100).clamp(0.0, 1.0);
+    return SizedBox(
+      width: 25,
+      height: 13,
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white, width: 1.2),
+                borderRadius: BorderRadius.circular(3),
               ),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: fill,
+                  child: const ColoredBox(color: Colors.white),
+                ),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 1),
+          Container(
+            width: 2,
+            height: 5,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.horizontal(right: Radius.circular(1)),
             ),
           ),
         ],
-        if (videoTitle == null || videoTitle!.isEmpty) const Spacer(),
-        Text(
-          '${currentTime.hour.toString().padLeft(2, '0')}:${currentTime.minute.toString().padLeft(2, '0')}',
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
-        if (videoTitle != null && videoTitle!.isNotEmpty) const Spacer(),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$batteryLevel%',
-              style: const TextStyle(color: Colors.white70, fontSize: 11),
-            ),
-            const SizedBox(width: 2),
-            SvgPicture.string(
-              batteryLevel >= 90
-                  ? BearsSVG.batterFullChargeSVG
-                  : batteryLevel >= 50
-                  ? BearsSVG.batterFivthSVG
-                  : BearsSVG.batterZeroSVG,
-              width: 20,
-              height: 20,
-              colorFilter: const ColorFilter.mode(
-                Colors.white,
-                BlendMode.srcIn,
-              ),
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 }

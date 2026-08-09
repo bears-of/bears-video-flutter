@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/common/widgets/app_button.dart';
 import 'package:bears_video/common/widgets/app_text_field.dart';
 import 'package:bears_video/features/home/home_providers.dart';
@@ -513,14 +514,21 @@ const _kidsFilterGroups = <List<String>>[
   yearOptions,
 ];
 
-const _homeChannels = <_HomeChannel>[
-  _HomeChannel('首页', null),
-  _HomeChannel('电影', 1, filterGroups: _movieFilterGroups),
-  _HomeChannel('电视剧', 2, filterGroups: _tvFilterGroups),
-  _HomeChannel('综艺', 3, filterGroups: _varietyFilterGroups),
-  _HomeChannel('动漫', 4, filterGroups: _animeFilterGroups),
-  _HomeChannel('纪录片', 5, filterGroups: _documentaryFilterGroups),
-  _HomeChannel('少儿', 208, filterGroups: _kidsFilterGroups),
+final _homeChannels = <_HomeChannel>[
+  for (final channel in homeChannelTypes)
+    _HomeChannel(
+      channel.label,
+      channel.typeId,
+      filterGroups: switch (channel.typeId) {
+        1 => _movieFilterGroups,
+        2 => _tvFilterGroups,
+        3 => _varietyFilterGroups,
+        4 => _animeFilterGroups,
+        5 => _documentaryFilterGroups,
+        208 => _kidsFilterGroups,
+        _ => const [],
+      },
+    ),
 ];
 
 class _ChannelBar extends StatelessWidget {
@@ -564,7 +572,6 @@ class _ChannelBar extends StatelessWidget {
                           ? Theme.of(context).colorScheme.onSurface
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: selected ? 18 : 15,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
                     ),
                     child: Text(_homeChannels[index].label),
                   ),
@@ -771,7 +778,7 @@ class _PaginatedChannelContentState
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.cloud_off_rounded, size: 42),
+                  const AppVectorIcon(AppVectorIcons.cloudOff, size: 42),
                   const SizedBox(height: 12),
                   const Text('加载失败，请稍后重试'),
                   const SizedBox(height: 8),
@@ -989,9 +996,6 @@ class _ChannelFilters extends StatelessWidget {
                         color: selected
                             ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: selected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
                       ),
                     ),
                   ),
@@ -1131,7 +1135,6 @@ class _VideoPosterCardState extends State<_VideoPosterCard> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: ResponsiveLayout.isDesktop(context) ? 14 : 12,
-                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -1240,7 +1243,7 @@ class _NetworkImagePlaceholder extends StatelessWidget {
       color: const Color.fromARGB(31, 157, 143, 143),
       child: showError
           ? const Center(
-              child: Icon(Icons.broken_image_outlined, color: Colors.grey),
+              child: AppVectorIcon(AppVectorIcons.imageOff, color: Colors.grey),
             )
           : null,
     );
@@ -1295,13 +1298,7 @@ class HomeRecommendView extends HookConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
-              child: Text(
-                category.name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Text(category.name, style: const TextStyle(fontSize: 18)),
             ),
           ),
         );
@@ -1518,7 +1515,6 @@ class _BannerView extends StatelessWidget {
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 15,
-                              fontWeight: FontWeight.w600,
                               shadows: [
                                 Shadow(color: Colors.black87, blurRadius: 4),
                               ],
@@ -1627,7 +1623,10 @@ class _SearchBar extends StatelessWidget {
                   ).push(MaterialPageRoute(builder: (_) => const SearchPage()));
                 },
                 hintText: '搜索视频，电影，直播',
-                prefixIcon: const Icon(Icons.search_sharp, size: 18),
+                prefixIcon: const AppVectorIcon(
+                  AppVectorIcons.search,
+                  size: 18,
+                ),
               ),
             ),
             const SizedBox(width: 18),

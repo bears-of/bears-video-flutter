@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 class AppColors {
   const AppColors._();
 
-  /// A quiet cyan canvas that stays comfortable during long browsing sessions.
-  static const Color background = Color(0xFFEDF9F8);
-  static const Color surface = Color(0xFFF9FFFF);
-  static const Color surfaceMuted = Color(0xFFDCEFED);
-  static const Color surfacePressed = Color(0xFFCBE7E4);
-  static const Color ink = Color(0xFF173331);
-  static const Color inkMuted = Color(0xFF607D7A);
-  static const Color primary = Color(0xFF168C84);
-  static const Color primaryPressed = Color(0xFF0F706A);
-  static const Color primaryDark = primaryPressed;
-  static const Color primarySoft = Color(0xFFD2EEEB);
+  /// A cool daylight canvas that stays comfortable during long browsing.
+  static const Color background = Color(0xFFF2F7FD);
+  static const Color surface = Color(0xFFFBFDFF);
+  static const Color surfaceMuted = Color(0xFFE6EEF8);
+  static const Color surfacePressed = Color(0xFFD7E5F6);
+  static const Color ink = Color(0xFF1E3049);
+  static const Color inkMuted = Color(0xFF586B83);
+  static const Color primary = Color(0xFF4388E8);
+  static const Color primaryPressed = Color(0xFF204E91);
+  static const Color primaryDark = Color(0xFF295FAF);
+  static const Color primarySoft = Color(0xFFE1ECFC);
   static const Color danger = Color(0xFFC64B51);
   static const Color dangerPressed = Color(0xFFA63A40);
-  static const Color accent = Color(0xFFFFB545);
-  static const Color outline = Color(0xFFBBD9D6);
-  static const Color focus = Color(0xFF38A79F);
-  static const Color overlay = Color(0x7A102B29);
+  static const Color accent = Color(0xFFF2A93B);
+  static const Color outline = Color(0xFFC7D7EA);
+  static const Color focus = Color(0xFF72A9F2);
+  static const Color overlay = Color(0x7A14243C);
 }

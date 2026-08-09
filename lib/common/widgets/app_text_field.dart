@@ -21,6 +21,7 @@ class AppTextField extends StatefulWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.style,
+    this.contentPadding,
   });
 
   final TextEditingController controller;
@@ -38,6 +39,7 @@ class AppTextField extends StatefulWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final TextStyle? style;
+  final EdgeInsetsGeometry? contentPadding;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -118,11 +120,7 @@ class _AppTextFieldState extends State<AppTextField> {
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           hintText: widget.hintText,
-          hintStyle: const TextStyle(
-            color: AppColors.inkMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-          ),
+          hintStyle: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
           prefixIcon: widget.prefixIcon,
           suffixIcon: widget.suffixIcon,
           prefixIconConstraints: const BoxConstraints(
@@ -133,10 +131,9 @@ class _AppTextFieldState extends State<AppTextField> {
             minHeight: 34,
             minWidth: 36,
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 9,
-          ),
+          contentPadding:
+              widget.contentPadding ??
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         ),
       ),
     );

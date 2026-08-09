@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/common/features/shell/shell_content.dart';
 import 'package:bears_video/core/theme/app_colors.dart';
 import 'package:bears_video/features/shell/shell_providers.dart';
@@ -76,7 +77,7 @@ class MobileRootShell extends ConsumerWidget {
                                 selected: currentTab == ShellTab.home,
                                 duration: navDuration,
                                 disableAnimations: disableAnimations,
-                                icon: Icons.home_rounded,
+                                icon: AppVectorIcons.house,
                                 label: '首页',
                               ),
                             ),
@@ -89,7 +90,7 @@ class MobileRootShell extends ConsumerWidget {
                                   ref.read(shellTabProvider.notifier).state =
                                       ShellTab.mine;
                                 },
-                                icon: Icons.person_rounded,
+                                icon: AppVectorIcons.user,
                                 label: '我的',
                               ),
                             ),
@@ -224,7 +225,7 @@ class _NavItem extends StatefulWidget {
   final bool selected;
   final Duration duration;
   final bool disableAnimations;
-  final IconData icon;
+  final AppVectorIconData icon;
   final String label;
 
   @override
@@ -280,7 +281,11 @@ class _NavItemState extends State<_NavItem> {
                         duration: widget.duration,
                         curve: Curves.easeOutCubic,
                         builder: (context, color, child) {
-                          return Icon(widget.icon, size: 24, color: color);
+                          return AppVectorIcon(
+                            widget.icon,
+                            size: 24,
+                            color: color,
+                          );
                         },
                       ),
                     ),
@@ -312,9 +317,6 @@ class _NavItemState extends State<_NavItem> {
                             style: TextStyle(
                               overflow: TextOverflow.ellipsis,
                               fontSize: 11,
-                              fontWeight: widget.selected
-                                  ? FontWeight.w800
-                                  : FontWeight.w700,
                             ),
                           );
                         },

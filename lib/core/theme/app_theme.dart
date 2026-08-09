@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 ThemeData buildAppTheme() {
   const colorScheme = ColorScheme.light(
-    primary: AppColors.primary,
+    primary: AppColors.primaryDark,
     onPrimary: Colors.white,
     secondary: AppColors.primarySoft,
     onSecondary: AppColors.primaryDark,
@@ -33,32 +33,15 @@ ThemeData buildAppTheme() {
       titleTextStyle: TextStyle(
         fontFamily: 'MiSans',
         fontSize: 16,
-        fontWeight: FontWeight.w700,
         color: AppColors.ink,
       ),
     ),
     textTheme: const TextTheme(
-      headlineMedium: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.w800,
-        color: AppColors.ink,
-      ),
-      titleLarge: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.w800,
-        color: AppColors.ink,
-      ),
-      titleMedium: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: AppColors.ink,
-      ),
+      headlineMedium: TextStyle(fontSize: 28, color: AppColors.ink),
+      titleLarge: TextStyle(fontSize: 22, color: AppColors.ink),
+      titleMedium: TextStyle(fontSize: 16, color: AppColors.ink),
       bodyMedium: TextStyle(fontSize: 14, color: AppColors.ink),
-      labelMedium: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: AppColors.inkMuted,
-      ),
+      labelMedium: TextStyle(fontSize: 12, color: AppColors.inkMuted),
     ),
     inputDecorationTheme: const InputDecorationTheme(
       filled: true,
@@ -75,10 +58,7 @@ ThemeData buildAppTheme() {
         borderRadius: AppRadii.field,
         borderSide: BorderSide(color: AppColors.focus, width: 1.5),
       ),
-      hintStyle: TextStyle(
-        color: AppColors.inkMuted,
-        fontWeight: FontWeight.w400,
-      ),
+      hintStyle: TextStyle(color: AppColors.inkMuted),
       contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     ),
     cardTheme: const CardThemeData(

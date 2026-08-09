@@ -1,3 +1,4 @@
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/common/features/shell/shell_content.dart';
 import 'package:bears_video/core/theme/app_colors.dart';
 import 'package:bears_video/features/shell/shell_providers.dart';
@@ -55,8 +56,8 @@ class _DesktopNavigation extends StatelessWidget {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
-                  Icons.play_arrow_rounded,
+                child: const AppVectorIcon(
+                  AppVectorIcons.play,
                   color: Colors.white,
                   size: 30,
                 ),
@@ -148,7 +149,6 @@ class _DesktopNavItem extends StatelessWidget {
                         ? AppColors.primaryDark
                         : AppColors.inkMuted,
                     fontSize: 12,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   ),
                 ),
               ],

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/common/widgets/app_button.dart';
 import 'package:bears_video/core/services/episode_download_repository.dart';
 import 'package:bears_video/features/download/download_formatters.dart';
@@ -265,7 +266,7 @@ class _EpisodeCover extends StatelessWidget {
         child: url.isEmpty
             ? const ColoredBox(
                 color: Color(0xFFE8E8E8),
-                child: Icon(Icons.movie_outlined),
+                child: AppVectorIcon(AppVectorIcons.film),
               )
             : CachedNetworkImage(
                 imageUrl: url,
@@ -274,7 +275,7 @@ class _EpisodeCover extends StatelessWidget {
                     const ColoredBox(color: Color(0xFFE8E8E8)),
                 errorWidget: (_, _, _) => const ColoredBox(
                   color: Color(0xFFE8E8E8),
-                  child: Icon(Icons.broken_image_outlined),
+                  child: AppVectorIcon(AppVectorIcons.imageOff),
                 ),
               ),
       ),

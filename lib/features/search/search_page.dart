@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/common/widgets/app_button.dart';
 import 'package:bears_video/common/widgets/app_text_field.dart';
 import 'package:bears_video/core/theme/app_colors.dart';
+import 'package:bears_video/features/home/home_channel_navigation.dart';
 import 'package:bears_video/features/player/video_detail.dart';
 import 'package:bears_video/features/search/search_providers.dart';
 import 'package:bears_video/features/svg/bears_svg.dart';
@@ -11,23 +13,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-class _SearchType {
-  const _SearchType(this.label, this.typeId);
-
-  final String label;
-  final int? typeId;
-}
-
-const _searchTypes = <_SearchType>[
-  _SearchType('全部', null),
-  _SearchType('电影', 1),
-  _SearchType('电视剧', 2),
-  _SearchType('综艺', 3),
-  _SearchType('动漫', 4),
-  _SearchType('纪录', 5),
-  _SearchType('少儿', 208),
-];
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
@@ -148,7 +133,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     if (query == null || _isLoading || !_hasMore) return;
     final generation = _requestGeneration;
     final page = _nextPage;
-    final typeId = _searchTypes[_selectedTypeIndex].typeId;
+    final typeId = homeChannelTypes[_selectedTypeIndex].typeId;
     final request = SearchRequest(
       pg: BigInt.from(page),
       tid: typeId == null ? null : BigInt.from(typeId),
@@ -280,7 +265,7 @@ class _SearchHeader extends StatelessWidget {
                   width: 36,
                   height: 36,
                   child: Center(
-                    child: Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+                    child: AppVectorIcon(AppVectorIcons.chevronLeft, size: 24),
                   ),
                 ),
               ),
@@ -296,7 +281,10 @@ class _SearchHeader extends StatelessWidget {
                 textInputAction: TextInputAction.search,
                 onSubmitted: onSubmitted,
                 hintText: '搜索视频，电影，直播',
-                prefixIcon: const Icon(Icons.search_sharp, size: 18),
+                prefixIcon: const AppVectorIcon(
+                  AppVectorIcons.search,
+                  size: 18,
+                ),
                 suffixIcon: hasText
                     ? MouseRegion(
                         cursor: SystemMouseCursors.click,
@@ -307,8 +295,8 @@ class _SearchHeader extends StatelessWidget {
                             width: 36,
                             height: 36,
                             child: Center(
-                              child: Icon(
-                                Icons.cancel_rounded,
+                              child: AppVectorIcon(
+                                AppVectorIcons.circleX,
                                 color: AppColors.inkMuted,
                                 size: 16,
                               ),
@@ -453,6 +441,8 @@ class _SearchResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
+
     return CustomScrollView(
       controller: controller,
       physics: const AlwaysScrollableScrollPhysics(),
@@ -463,25 +453,45 @@ class _SearchResults extends StatelessWidget {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
-              itemCount: _searchTypes.length,
+              itemCount: homeChannelTypes.length,
               separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (context, index) {
                 final selected = index == selectedTypeIndex;
                 return GestureDetector(
                   onTap: () => onTypeSelected(index),
                   child: Center(
-                    child: AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 180),
-                      style: TextStyle(
-                        fontSize: selected ? 18 : 15,
-                        fontWeight: selected
-                            ? FontWeight.w800
-                            : FontWeight.w500,
-                        color: selected
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      child: Text(_searchTypes[index].label),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedDefaultTextStyle(
+                          duration: disableAnimations
+                              ? Duration.zero
+                              : const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          style: TextStyle(
+                            fontSize: selected ? 18 : 15,
+                            color: selected
+                                ? Theme.of(context).colorScheme.onSurface
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                          ),
+                          child: Text(homeChannelTypes[index].label),
+                        ),
+                        const SizedBox(height: 2),
+                        AnimatedContainer(
+                          duration: disableAnimations
+                              ? Duration.zero
+                              : const Duration(milliseconds: 240),
+                          curve: Curves.easeOutCubic,
+                          width: selected ? 18 : 0,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -634,10 +644,7 @@ class _SearchResultCard extends StatelessWidget {
                       item.vodName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: const TextStyle(fontSize: 15),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -686,7 +693,7 @@ class _SearchResultCard extends StatelessWidget {
   }
 
   String _typeLabel(int typeId) {
-    for (final type in _searchTypes) {
+    for (final type in homeChannelTypes) {
       if (type.typeId == typeId) return type.label;
     }
     return '';
@@ -708,7 +715,7 @@ class _SearchPosterImage extends StatelessWidget {
         (uri.scheme != 'http' && uri.scheme != 'https')) {
       return const ColoredBox(
         color: Color(0xFFF2F2F2),
-        child: Icon(Icons.broken_image_outlined, color: Colors.grey),
+        child: AppVectorIcon(AppVectorIcons.imageOff, color: Colors.grey),
       );
     }
     final cacheWidth = (96 * MediaQuery.devicePixelRatioOf(context)).round();
@@ -721,7 +728,7 @@ class _SearchPosterImage extends StatelessWidget {
       placeholder: (_, _) => const ColoredBox(color: Color(0xFFF2F2F2)),
       errorWidget: (_, _, _) => const ColoredBox(
         color: Color(0xFFF2F2F2),
-        child: Icon(Icons.broken_image_outlined, color: Colors.grey),
+        child: AppVectorIcon(AppVectorIcons.imageOff, color: Colors.grey),
       ),
     );
   }

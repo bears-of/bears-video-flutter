@@ -3,8 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/common/platform/app_platform_controller.dart';
+import 'package:bears_video/common/widgets/app_bubble_notice.dart';
 import 'package:bears_video/common/widgets/app_button.dart';
+import 'package:bears_video/common/widgets/app_text_field.dart';
 import 'package:bears_video/core/theme/app_colors.dart';
 import 'package:bears_video/features/download/download_manager_provider.dart';
 import 'package:bears_video/features/full_screen/full_screen_player.dart';
@@ -23,6 +26,63 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 const _episodeSheetQuickDuration = Duration(milliseconds: 140);
 const _episodeSheetMotionDuration = Duration(milliseconds: 220);
+
+BoxDecoration _episodeSelectorDecoration({required bool selected}) {
+  return BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(8),
+    border: Border.all(
+      color: selected ? AppColors.primaryDark : AppColors.outline,
+      width: selected ? 1.5 : 1,
+    ),
+  );
+}
+
+class _PlayerControlButton extends StatelessWidget {
+  const _PlayerControlButton({
+    required this.icon,
+    required this.semanticLabel,
+    required this.onPressed,
+  });
+
+  final Widget icon;
+  final String semanticLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      onTap: onPressed,
+      child: ExcludeSemantics(
+        child: FocusableActionDetector(
+          actions: {
+            ActivateIntent: CallbackAction<ActivateIntent>(
+              onInvoke: (_) {
+                onPressed();
+                return null;
+              },
+            ),
+          },
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onPressed,
+            child: SizedBox.square(
+              dimension: 44,
+              child: Center(
+                child: IconTheme.merge(
+                  data: const IconThemeData(color: Colors.white),
+                  child: icon,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _PlayerControllerSession {
   bool cancelled = false;
@@ -68,31 +128,22 @@ class _SelectionChipButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(6),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(6),
         onTap: onTap,
         child: Ink(
           height: 36,
           decoration: BoxDecoration(
-            color: selected ? colorScheme.primary : Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(10),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: selected ? colorScheme.primary : Colors.grey.shade300,
+              color: selected ? AppColors.primaryDark : AppColors.outline,
+              width: selected ? 1.5 : 1,
             ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: colorScheme.primary.withValues(alpha: 0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -105,8 +156,7 @@ class _SelectionChipButton extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                  color: selected ? Colors.white : Colors.black87,
+                  color: selected ? AppColors.primaryDark : AppColors.inkMuted,
                 ),
               ),
             ),
@@ -133,18 +183,22 @@ class _DividerWithLabel extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.chevron_left, size: 18, color: primaryColor),
+                AppVectorIcon(
+                  AppVectorIcons.chevronLeft,
+                  size: 18,
+                  color: primaryColor,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   '详情介绍',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right, size: 18, color: primaryColor),
+                AppVectorIcon(
+                  AppVectorIcons.chevronRight,
+                  size: 18,
+                  color: primaryColor,
+                ),
               ],
             ),
           ),
@@ -174,14 +228,20 @@ class _FavoriteButton extends ConsumerWidget {
                     .read(videoFavoriteProvider(videoId).notifier)
                     .toggle(videoDetail);
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(isFavorite ? '已收藏' : '已取消收藏')),
-                );
-              } catch (error) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
+                showAppBubbleNotice(
                   context,
-                ).showSnackBar(SnackBar(content: Text('收藏操作失败：$error')));
+                  isFavorite ? '已收藏' : '已取消收藏',
+                  type: isFavorite
+                      ? AppBubbleNoticeType.success
+                      : AppBubbleNoticeType.info,
+                );
+              } catch (_) {
+                if (!context.mounted) return;
+                showAppBubbleNotice(
+                  context,
+                  '收藏操作失败，请稍后重试',
+                  type: AppBubbleNoticeType.error,
+                );
               }
             },
       child: Padding(
@@ -192,7 +252,11 @@ class _FavoriteButton extends ConsumerWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : favoriteAsync.value ?? false
-            ? const Icon(Icons.star_rounded, size: 18, color: Colors.orange)
+            ? const AppVectorIcon(
+                AppVectorIcons.star,
+                size: 18,
+                color: Colors.orange,
+              )
             : SvgPicture.string(
                 BearsSVG.starSVG,
                 width: 18,
@@ -251,17 +315,19 @@ class _DownloadEpisodeButton extends ConsumerWidget {
       if (previous?.status == next?.status || !context.mounted) return;
       final episodeLabel = playSource.episodes[episodeIndex].label;
       if (next?.status == DownloadTaskStatus.completed) {
-        ScaffoldMessenger.of(
+        showAppBubbleNotice(
           context,
-        ).showSnackBar(SnackBar(content: Text('$episodeLabel 下载完成')));
+          '$episodeLabel 下载完成',
+          type: AppBubbleNoticeType.success,
+        );
       } else if (next?.status == DownloadTaskStatus.failed) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('下载失败：${formatError(next?.error)}')),
+        showAppBubbleNotice(
+          context,
+          '下载失败：${formatError(next?.error)}',
+          type: AppBubbleNoticeType.error,
         );
       } else if (next?.status == DownloadTaskStatus.cancelled) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$episodeLabel 已取消下载')));
+        showAppBubbleNotice(context, '$episodeLabel 已取消下载');
       }
     });
 
@@ -318,21 +384,28 @@ class _DownloadEpisodeButton extends ConsumerWidget {
                           '${(progress * 100).clamp(0, 100).toInt()}%',
                           style: TextStyle(
                             fontSize: 7,
-                            fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                     ],
                   )
                 : isDownloaded
-                ? const Icon(Icons.download_done, size: 20, color: Colors.green)
+                ? const AppVectorIcon(
+                    AppVectorIcons.badgeCheck,
+                    size: 20,
+                    color: Colors.green,
+                  )
                 : isCancelling
                 ? const SizedBox.square(
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : isFailed
-                ? const Icon(Icons.error_outline, size: 20, color: Colors.red)
+                ? const AppVectorIcon(
+                    AppVectorIcons.circleAlert,
+                    size: 20,
+                    color: Colors.red,
+                  )
                 : SvgPicture.string(
                     BearsSVG.downloadSVG,
                     width: 18,
@@ -722,10 +795,10 @@ class VideoDetailPage extends HookConsumerWidget {
 
     String formatDuration(Duration duration) {
       String two(int n) => n.toString().padLeft(2, '0');
-      final hours = two(duration.inHours);
       final minutes = two(duration.inMinutes.remainder(60));
       final seconds = two(duration.inSeconds.remainder(60));
-      return "$hours:$minutes:$seconds";
+      if (duration.inHours == 0) return '$minutes:$seconds';
+      return '${two(duration.inHours)}:$minutes:$seconds';
     }
 
     String formatUserError(Object? error) {
@@ -777,10 +850,7 @@ class VideoDetailPage extends HookConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "选集",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
+                const Text("选集", style: TextStyle(fontSize: 15)),
                 const SizedBox(height: 8),
                 SizedBox(
                   height: 40,
@@ -821,7 +891,10 @@ class VideoDetailPage extends HookConsumerWidget {
                           child: const SizedBox.square(
                             dimension: 36,
                             child: Center(
-                              child: Icon(Icons.keyboard_arrow_down, size: 20),
+                              child: AppVectorIcon(
+                                AppVectorIcons.chevronDown,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ),
@@ -840,10 +913,7 @@ class VideoDetailPage extends HookConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "播放源",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
+                const Text("播放源", style: TextStyle(fontSize: 15)),
                 const SizedBox(height: 8),
                 SizedBox(
                   height: 36,
@@ -884,10 +954,7 @@ class VideoDetailPage extends HookConsumerWidget {
                     Expanded(
                       child: Text(
                         info.vodName,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontSize: 22),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -934,8 +1001,8 @@ class VideoDetailPage extends HookConsumerWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.star_rounded,
+                    const AppVectorIcon(
+                      AppVectorIcons.star,
                       size: 18,
                       color: Colors.orange,
                     ),
@@ -945,7 +1012,6 @@ class VideoDetailPage extends HookConsumerWidget {
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.orange,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -987,11 +1053,7 @@ class VideoDetailPage extends HookConsumerWidget {
                     const SizedBox(width: 8),
                     Text(
                       '演职人员',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(color: Colors.black, fontSize: 15),
                     ),
                   ],
                 ),
@@ -1018,11 +1080,7 @@ class VideoDetailPage extends HookConsumerWidget {
                     const SizedBox(width: 8),
                     Text(
                       '剧情介绍',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(color: Colors.black, fontSize: 15),
                     ),
                   ],
                 ),
@@ -1119,6 +1177,10 @@ class VideoDetailPage extends HookConsumerWidget {
                     ),
                   ),
             builder: (context, child) {
+              final controlsMotionDuration =
+                  MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 180);
               return AspectRatio(
                 aspectRatio: 16 / 9,
                 child: ColoredBox(
@@ -1209,136 +1271,87 @@ class VideoDetailPage extends HookConsumerWidget {
                             ),
                           ),
                         Positioned(
-                          top: 8,
-                          left: 8,
-                          right: 8,
-                          child: SafeArea(
-                            child: Row(
-                              children: [
-                                InkWell(
-                                  borderRadius: BorderRadius.circular(20),
-                                  onTap: clearAndPop,
-                                  child: Icon(
-                                    Icons.arrow_back_ios_new,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                                const Spacer(),
-                                AnimatedOpacity(
-                                  opacity: controlsVisible.value ? 1 : 0,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: IgnorePointer(
-                                    ignoring: !controlsVisible.value,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(20),
-                                      onTap: () {},
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(6),
-                                        child: SvgPicture.string(
-                                          BearsSVG.tvSVG,
-                                          width: 22,
-                                          height: 22,
-                                          colorFilter: const ColorFilter.mode(
-                                            Colors.white,
-                                            BlendMode.srcIn,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Positioned(
                           left: 0,
                           right: 0,
                           bottom: 0,
                           child: AnimatedOpacity(
                             opacity: controlsVisible.value ? 1 : 0,
-                            duration: const Duration(milliseconds: 200),
-                            child: IgnorePointer(
-                              ignoring: !controlsVisible.value,
-                              child: Container(
-                                padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Colors.transparent,
-                                      Colors.black54,
-                                      Colors.black87,
-                                    ],
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        if (videoPlayerController
-                                            .value
-                                            .isPlaying) {
-                                          videoPlayerController.pause();
-                                        } else {
-                                          videoPlayerController.play();
-                                        }
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(left: 2),
-                                        child: SvgPicture.string(
-                                          videoPlayerController.value.isPlaying
-                                              ? BearsSVG.pauseSVG
-                                              : BearsSVG.playSVG,
-                                          width: 22,
-                                          height: 22,
-                                          colorFilter: const ColorFilter.mode(
-                                            Colors.white,
-                                            BlendMode.srcIn,
-                                          ),
-                                        ),
-                                      ),
+                            duration: controlsMotionDuration,
+                            child: FocusScope(
+                              canRequestFocus: controlsVisible.value,
+                              descendantsAreFocusable: controlsVisible.value,
+                              child: ExcludeSemantics(
+                                excluding: !controlsVisible.value,
+                                child: IgnorePointer(
+                                  ignoring: !controlsVisible.value,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      8,
+                                      4,
+                                      8,
+                                      6,
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      formatDuration(
-                                        videoPlayerController.value.position,
-                                      ),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Expanded(
-                                      child: SliderTheme(
-                                        data: SliderTheme.of(context).copyWith(
-                                          trackHeight: 3,
-                                          thumbShape:
-                                              const RoundSliderThumbShape(
-                                                enabledThumbRadius: 6,
-                                              ),
-                                          overlayShape:
-                                              const RoundSliderOverlayShape(
-                                                overlayRadius: 12,
-                                              ),
-                                          activeTrackColor: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          inactiveTrackColor: Colors.white24,
-                                          thumbColor: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                        ),
-                                        child: Slider(
-                                          value:
-                                              (pendingSeekPosition.value ??
-                                                      videoPlayerController
-                                                          .value
-                                                          .position)
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          height: 28,
+                                          child: SliderTheme(
+                                            data: SliderTheme.of(context).copyWith(
+                                              trackHeight: 2.5,
+                                              thumbShape:
+                                                  const RoundSliderThumbShape(
+                                                    enabledThumbRadius: 5,
+                                                  ),
+                                              overlayShape:
+                                                  const RoundSliderOverlayShape(
+                                                    overlayRadius: 14,
+                                                  ),
+                                              activeTrackColor:
+                                                  AppColors.primary,
+                                              secondaryActiveTrackColor:
+                                                  Colors.white54,
+                                              inactiveTrackColor:
+                                                  Colors.white24,
+                                              thumbColor: AppColors.primary,
+                                            ),
+                                            child: Slider(
+                                              value:
+                                                  (pendingSeekPosition.value ??
+                                                          videoPlayerController
+                                                              .value
+                                                              .position)
+                                                      .inMilliseconds
+                                                      .toDouble()
+                                                      .clamp(
+                                                        0,
+                                                        videoPlayerController
+                                                            .value
+                                                            .duration
+                                                            .inMilliseconds
+                                                            .toDouble(),
+                                                      )
+                                                      .toDouble(),
+                                              max: videoPlayerController
+                                                  .value
+                                                  .duration
                                                   .inMilliseconds
+                                                  .toDouble()
+                                                  .clamp(1, double.infinity)
+                                                  .toDouble(),
+                                              secondaryTrackValue: math
+                                                  .max(
+                                                    (pendingSeekPosition
+                                                                .value ??
+                                                            videoPlayerController
+                                                                .value
+                                                                .position)
+                                                        .inMilliseconds,
+                                                    videoPlayerController
+                                                        .value
+                                                        .buffer
+                                                        .inMilliseconds,
+                                                  )
                                                   .toDouble()
                                                   .clamp(
                                                     0,
@@ -1346,66 +1359,104 @@ class VideoDetailPage extends HookConsumerWidget {
                                                         .value
                                                         .duration
                                                         .inMilliseconds
-                                                        .toDouble(),
-                                                  ),
-                                          max: videoPlayerController
-                                              .value
-                                              .duration
-                                              .inMilliseconds
-                                              .toDouble()
-                                              .clamp(1, double.infinity),
-                                          onChanged: (value) {
-                                            pendingSeekPosition.value =
-                                                Duration(
+                                                        .toDouble()
+                                                        .clamp(
+                                                          1,
+                                                          double.infinity,
+                                                        ),
+                                                  )
+                                                  .toDouble(),
+                                              onChanged: (value) {
+                                                pendingSeekPosition
+                                                    .value = Duration(
                                                   milliseconds: value.toInt(),
                                                 );
-                                          },
-                                          onChangeEnd: (value) async {
-                                            final position = Duration(
-                                              milliseconds: value.toInt(),
-                                            );
-                                            await videoPlayerController.seekTo(
-                                              position,
-                                            );
-                                            if (context.mounted) {
-                                              pendingSeekPosition.value = null;
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      formatDuration(
-                                        videoPlayerController.value.duration,
-                                      ),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    InkWell(
-                                      borderRadius: BorderRadius.circular(20),
-                                      onTap: () {
-                                        _enterFullScreen(context);
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 2,
-                                        ),
-                                        child: SvgPicture.string(
-                                          BearsSVG.fullScreenSVG,
-                                          width: 22,
-                                          height: 22,
-                                          colorFilter: const ColorFilter.mode(
-                                            Colors.white,
-                                            BlendMode.srcIn,
+                                              },
+                                              onChangeEnd: (value) async {
+                                                final position = Duration(
+                                                  milliseconds: value.toInt(),
+                                                );
+                                                await videoPlayerController
+                                                    .seekTo(position);
+                                                if (context.mounted) {
+                                                  pendingSeekPosition.value =
+                                                      null;
+                                                }
+                                              },
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                        Row(
+                                          children: [
+                                            _PlayerControlButton(
+                                              semanticLabel:
+                                                  videoPlayerController
+                                                      .value
+                                                      .isPlaying
+                                                  ? '暂停'
+                                                  : '播放',
+                                              icon: SvgPicture.string(
+                                                videoPlayerController
+                                                        .value
+                                                        .isPlaying
+                                                    ? BearsSVG.pauseSVG
+                                                    : BearsSVG.playSVG,
+                                                width: 24,
+                                                height: 24,
+                                                colorFilter:
+                                                    const ColorFilter.mode(
+                                                      Colors.white,
+                                                      BlendMode.srcIn,
+                                                    ),
+                                              ),
+                                              onPressed: () {
+                                                if (videoPlayerController
+                                                    .value
+                                                    .isPlaying) {
+                                                  videoPlayerController.pause();
+                                                } else {
+                                                  videoPlayerController.play();
+                                                }
+                                              },
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${formatDuration(videoPlayerController.value.position)} / ${formatDuration(videoPlayerController.value.duration)}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                shadows: [
+                                                  Shadow(
+                                                    color: Colors.black87,
+                                                    blurRadius: 4,
+                                                  ),
+                                                ],
+                                                fontFeatures: [
+                                                  FontFeature.tabularFigures(),
+                                                ],
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            _PlayerControlButton(
+                                              semanticLabel: '全屏播放',
+                                              icon: SvgPicture.string(
+                                                BearsSVG.fullScreenSVG,
+                                                width: 24,
+                                                height: 24,
+                                                colorFilter:
+                                                    const ColorFilter.mode(
+                                                      Colors.white,
+                                                      BlendMode.srcIn,
+                                                    ),
+                                              ),
+                                              onPressed: () =>
+                                                  _enterFullScreen(context),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -1444,7 +1495,7 @@ class VideoDetailPage extends HookConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.wifi_off_rounded, size: 64),
+                    const AppVectorIcon(AppVectorIcons.wifiOff, size: 64),
                     const SizedBox(height: 16),
                     const Text('无法连接', style: TextStyle(fontSize: 20)),
                     const SizedBox(height: 8),
@@ -1495,7 +1546,28 @@ class VideoDetailPage extends HookConsumerWidget {
       onPopInvokedWithResult: (didPop, result) async {
         if (!didPop) await clearAndPop(result);
       },
-      child: page,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          page,
+          Positioned(
+            top: 0,
+            left: 0,
+            child: SafeArea(
+              minimum: const EdgeInsets.all(8),
+              child: _PlayerControlButton(
+                semanticLabel: '返回',
+                icon: const AppVectorIcon(
+                  AppVectorIcons.chevronLeft,
+                  size: 24,
+                  shadows: [Shadow(color: Colors.black87, blurRadius: 4)],
+                ),
+                onPressed: clearAndPop,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1515,6 +1587,8 @@ class _EpisodeSheet extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final searchController = useTextEditingController();
+    final searchQuery = useState('');
     final currentSourceIndex = ref.watch(
       episodeSelectionProvider(videoId).select((value) => value.sourceIndex),
     );
@@ -1527,6 +1601,12 @@ class _EpisodeSheet extends HookConsumerWidget {
         ? maxPanelHeight
         : sheetHeight.clamp(320.0, maxPanelHeight).toDouble();
     final playSources = videoDetail.playSources;
+
+    useEffect(() {
+      searchController.clear();
+      searchQuery.value = '';
+      return null;
+    }, [currentSourceIndex]);
 
     if (playSources.isEmpty) {
       return SizedBox(
@@ -1550,18 +1630,15 @@ class _EpisodeSheet extends HookConsumerWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.video_library_outlined,
+                            AppVectorIcon(
+                              AppVectorIcons.library,
                               size: 42,
                               color: AppColors.inkMuted,
                             ),
                             SizedBox(height: 12),
                             Text(
                               '暂时没有可播放的剧集',
-                              style: TextStyle(
-                                color: AppColors.inkMuted,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: TextStyle(color: AppColors.inkMuted),
                             ),
                           ],
                         ),
@@ -1587,6 +1664,23 @@ class _EpisodeSheet extends HookConsumerWidget {
     final currentEpisodeLabel = episodes.isEmpty
         ? '暂无剧集'
         : episodes[episodeIndex].label;
+    final normalizedQuery = searchQuery.value.trim().toLowerCase();
+    final visibleEpisodeIndices = List<int>.generate(episodes.length, (i) => i)
+        .where(
+          (index) =>
+              normalizedQuery.isEmpty ||
+              episodes[index].label.toLowerCase().contains(normalizedQuery),
+        )
+        .toList(growable: false);
+
+    void selectSource(int index) {
+      ref.read(episodeSelectionProvider(videoId).notifier).selectSource(index);
+    }
+
+    void selectEpisode(int index) {
+      ref.read(episodeSelectionProvider(videoId).notifier).selectEpisode(index);
+      onClose();
+    }
 
     return SizedBox(
       height: panelHeight,
@@ -1606,181 +1700,66 @@ class _EpisodeSheet extends HookConsumerWidget {
                   child: Column(
                     children: [
                       _EpisodeSheetHeader(
-                        title: '选集',
+                        title: '选集与播放源',
                         subtitle:
-                            '${currentSource.name} · ${episodes.length} 集 · 当前 $currentEpisodeLabel',
+                            '${currentSource.name} · $currentEpisodeLabel',
                         onClose: onClose,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
-                        child: Row(
-                          children: [
-                            const Text(
-                              '播放源',
-                              style: TextStyle(
-                                color: AppColors.ink,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              '${playSources.length} 个可用源',
-                              style: const TextStyle(
-                                color: AppColors.inkMuted,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        height: 46,
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          scrollDirection: Axis.horizontal,
-                          itemCount: playSources.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: 8),
-                          itemBuilder: (context, index) {
-                            final source = playSources[index];
-                            return _EpisodeSourceChip(
-                              key: ValueKey(
-                                'sheet_source_${source.name}_$index',
-                              ),
-                              label: source.name,
-                              episodeCount: source.episodes.length,
-                              selected: sourceIndex == index,
-                              onTap: () => ref
-                                  .read(
-                                    episodeSelectionProvider(videoId).notifier,
-                                  )
-                                  .selectSource(index),
-                            );
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 22, 20, 12),
-                        child: Row(
-                          children: [
-                            const Text(
-                              '剧集',
-                              style: TextStyle(
-                                color: AppColors.ink,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceMuted,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                '${episodes.length}',
-                                style: const TextStyle(
-                                  color: AppColors.inkMuted,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            if (episodes.isNotEmpty)
-                              Flexible(
-                                child: Text(
-                                  '正在播放 · $currentEpisodeLabel',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppColors.primaryDark,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
                       ),
                       Expanded(
                         child: LayoutBuilder(
                           builder: (context, constraints) {
-                            if (episodes.isEmpty) {
-                              return const Center(
-                                child: Text(
-                                  '该播放源暂无剧集',
-                                  style: TextStyle(color: AppColors.inkMuted),
-                                ),
-                              );
-                            }
-                            var widestLabelUnits = 0.0;
-                            for (final episode in episodes) {
-                              final units = episode.label.runes.fold<double>(
-                                0,
-                                (sum, rune) => sum + (rune <= 0x7F ? 0.58 : 1),
-                              );
-                              widestLabelUnits = math.max(
-                                widestLabelUnits,
-                                units,
-                              );
-                            }
-                            final availableGridWidth = math.max(
-                              1.0,
-                              constraints.maxWidth - 40,
-                            );
-                            final scaledFontSize = MediaQuery.textScalerOf(
-                              context,
-                            ).scale(12);
-                            final preferredTileWidth =
-                                (widestLabelUnits * scaledFontSize + 32).clamp(
-                                  92.0,
-                                  240.0,
-                                );
-                            final columns =
-                                ((availableGridWidth + 10) /
-                                        (preferredTileWidth + 10))
-                                    .floor()
-                                    .clamp(1, 8);
-                            return GridView.builder(
-                              controller: scrollController,
-                              padding: EdgeInsets.fromLTRB(
-                                20,
-                                0,
-                                20,
-                                mediaQuery.padding.bottom + 20,
-                              ),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: columns,
-                                    mainAxisSpacing: 10,
-                                    crossAxisSpacing: 10,
-                                    mainAxisExtent: 48,
-                                  ),
-                              itemCount: episodes.length,
-                              itemBuilder: (context, index) {
-                                return _EpisodeTile(
-                                  key: ValueKey(
-                                    'sheet_episode_${sourceIndex}_$index',
-                                  ),
-                                  label: episodes[index].label,
-                                  selected: episodeIndex == index,
-                                  onTap: () {
-                                    ref
-                                        .read(
-                                          episodeSelectionProvider(
-                                            videoId,
-                                          ).notifier,
-                                        )
-                                        .selectEpisode(index);
-                                    onClose();
-                                  },
-                                );
+                            final wide = constraints.maxWidth >= 700;
+                            final workspace = _EpisodeWorkspace(
+                              episodes: episodes,
+                              visibleEpisodeIndices: visibleEpisodeIndices,
+                              sourceIndex: sourceIndex,
+                              episodeIndex: episodeIndex,
+                              currentEpisodeLabel: currentEpisodeLabel,
+                              searchController: searchController,
+                              searchQuery: searchQuery.value,
+                              onSearchChanged: (value) =>
+                                  searchQuery.value = value,
+                              onClearSearch: () {
+                                searchController.clear();
+                                searchQuery.value = '';
                               },
+                              onSelectEpisode: selectEpisode,
+                              scrollController: scrollController,
+                              bottomPadding: mediaQuery.padding.bottom + 20,
+                              horizontalPadding: wide ? 24 : 20,
+                            );
+                            if (wide) {
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _EpisodeSourceRail(
+                                    playSources: playSources,
+                                    selectedIndex: sourceIndex,
+                                    onSelected: selectSource,
+                                  ),
+                                  const VerticalDivider(
+                                    width: 1,
+                                    thickness: 1,
+                                    color: AppColors.outline,
+                                  ),
+                                  Expanded(child: workspace),
+                                ],
+                              );
+                            }
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _MobileSourcePicker(
+                                  playSources: playSources,
+                                  selectedIndex: sourceIndex,
+                                  onSelected: selectSource,
+                                ),
+                                const Divider(
+                                  height: 1,
+                                  color: AppColors.outline,
+                                ),
+                                Expanded(child: workspace),
+                              ],
                             );
                           },
                         ),
@@ -1808,7 +1787,7 @@ class _EpisodeSheetSurface extends StatelessWidget {
       color: AppColors.surface,
       elevation: 0,
       clipBehavior: Clip.antiAlias,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       child: DecoratedBox(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: Colors.white, width: 1)),
@@ -1844,23 +1823,9 @@ class _EpisodeSheetHeader extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 12, 14),
+          padding: const EdgeInsets.fromLTRB(20, 10, 10, 12),
           child: Row(
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.video_library_rounded,
-                  color: AppColors.primaryDark,
-                  size: 21,
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1869,8 +1834,7 @@ class _EpisodeSheetHeader extends StatelessWidget {
                       title,
                       style: const TextStyle(
                         color: AppColors.ink,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
                         fontFamily: 'MiSans',
                       ),
                     ),
@@ -1888,7 +1852,7 @@ class _EpisodeSheetHeader extends StatelessWidget {
                 ),
               ),
               Tooltip(
-                message: '关闭选集',
+                message: '关闭',
                 child: Material(
                   color: Colors.transparent,
                   shape: const CircleBorder(),
@@ -1897,10 +1861,10 @@ class _EpisodeSheetHeader extends StatelessWidget {
                     customBorder: const CircleBorder(),
                     onTap: onClose,
                     child: const SizedBox.square(
-                      dimension: 36,
+                      dimension: 44,
                       child: Center(
-                        child: Icon(
-                          Icons.close_rounded,
+                        child: AppVectorIcon(
+                          AppVectorIcons.x,
                           size: 20,
                           color: AppColors.inkMuted,
                         ),
@@ -1934,6 +1898,13 @@ class _EpisodeSourceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    final motionDuration = disableAnimations
+        ? Duration.zero
+        : _episodeSheetMotionDuration;
+    final quickDuration = disableAnimations
+        ? Duration.zero
+        : _episodeSheetQuickDuration;
     return Semantics(
       button: true,
       selected: selected,
@@ -1942,25 +1913,18 @@ class _EpisodeSourceChip extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(8),
           child: AnimatedContainer(
-            duration: _episodeSheetMotionDuration,
+            duration: motionDuration,
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 13),
-            decoration: BoxDecoration(
-              color: selected
-                  ? AppColors.primary.withValues(alpha: 0.11)
-                  : AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: selected ? AppColors.primary : Colors.transparent,
-              ),
-            ),
+            constraints: const BoxConstraints(minHeight: 44),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: _episodeSelectorDecoration(selected: selected),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 AnimatedContainer(
-                  duration: _episodeSheetQuickDuration,
+                  duration: quickDuration,
                   width: selected ? 7 : 0,
                   height: 7,
                   margin: EdgeInsets.only(right: selected ? 7 : 0),
@@ -1976,7 +1940,6 @@ class _EpisodeSourceChip extends StatelessWidget {
                         ? AppColors.primaryDark
                         : AppColors.inkMuted,
                     fontSize: 13,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -1984,10 +1947,9 @@ class _EpisodeSourceChip extends StatelessWidget {
                   '$episodeCount',
                   style: TextStyle(
                     color: selected
-                        ? AppColors.primary
-                        : AppColors.inkMuted.withValues(alpha: 0.72),
+                        ? AppColors.primaryDark
+                        : AppColors.inkMuted,
                     fontSize: 11,
-                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -2013,6 +1975,9 @@ class _EpisodeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final motionDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : _episodeSheetMotionDuration;
     return Tooltip(
       message: label,
       waitDuration: const Duration(milliseconds: 450),
@@ -2024,32 +1989,491 @@ class _EpisodeTile extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             child: AnimatedContainer(
-              duration: _episodeSheetMotionDuration,
+              duration: motionDuration,
               curve: Curves.easeOutCubic,
-              padding: const EdgeInsets.symmetric(horizontal: 9),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.primary : AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Center(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: selected ? Colors.white : AppColors.ink,
-                    fontSize: 12,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: _episodeSelectorDecoration(selected: selected),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (selected) ...[
+                    const AppVectorIcon(
+                      AppVectorIcons.play,
+                      size: 16,
+                      color: AppColors.primaryDark,
+                    ),
+                    const SizedBox(width: 3),
+                  ],
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: selected
+                            ? AppColors.primaryDark
+                            : AppColors.inkMuted,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MobileSourcePicker extends StatelessWidget {
+  const _MobileSourcePicker({
+    required this.playSources,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<PlaySource> playSources;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 0, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 20, bottom: 10),
+            child: Row(
+              children: [
+                const Text(
+                  '播放源',
+                  style: TextStyle(color: AppColors.ink, fontSize: 14),
+                ),
+                const Spacer(),
+                Text(
+                  '${playSources.length} 个可用',
+                  style: const TextStyle(
+                    color: AppColors.inkMuted,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 20),
+              itemCount: playSources.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final source = playSources[index];
+                return _EpisodeSourceChip(
+                  key: ValueKey('sheet_source_${source.name}_$index'),
+                  label: source.name,
+                  episodeCount: source.episodes.length,
+                  selected: index == selectedIndex,
+                  onTap: () => onSelected(index),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EpisodeSourceRail extends StatelessWidget {
+  const _EpisodeSourceRail({
+    required this.playSources,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<PlaySource> playSources;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final motionDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : _episodeSheetMotionDuration;
+    return SizedBox(
+      width: 224,
+      child: ColoredBox(
+        color: AppColors.background,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+              child: Row(
+                children: [
+                  const Text(
+                    '播放源',
+                    style: TextStyle(color: AppColors.ink, fontSize: 15),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${playSources.length}',
+                    style: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                itemCount: playSources.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 6),
+                itemBuilder: (context, index) {
+                  final source = playSources[index];
+                  final selected = selectedIndex == index;
+                  return Semantics(
+                    button: true,
+                    selected: selected,
+                    label: '${source.name}，${source.episodes.length} 集',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        key: ValueKey('sheet_source_${source.name}_$index'),
+                        onTap: () => onSelected(index),
+                        borderRadius: BorderRadius.circular(8),
+                        child: AnimatedContainer(
+                          duration: motionDuration,
+                          curve: Curves.easeOutCubic,
+                          constraints: const BoxConstraints(minHeight: 52),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: _episodeSelectorDecoration(
+                            selected: selected,
+                          ),
+                          child: Row(
+                            children: [
+                              AppVectorIcon(
+                                selected
+                                    ? AppVectorIcons.circlePlay
+                                    : AppVectorIcons.circlePlay,
+                                size: 20,
+                                color: selected
+                                    ? AppColors.primaryDark
+                                    : AppColors.primary,
+                              ),
+                              const SizedBox(width: 9),
+                              Expanded(
+                                child: Text(
+                                  source.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: selected
+                                        ? AppColors.primaryDark
+                                        : AppColors.inkMuted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${source.episodes.length}',
+                                style: TextStyle(
+                                  color: selected
+                                      ? AppColors.primaryDark
+                                      : AppColors.inkMuted,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EpisodeWorkspace extends StatelessWidget {
+  const _EpisodeWorkspace({
+    required this.episodes,
+    required this.visibleEpisodeIndices,
+    required this.sourceIndex,
+    required this.episodeIndex,
+    required this.currentEpisodeLabel,
+    required this.searchController,
+    required this.searchQuery,
+    required this.onSearchChanged,
+    required this.onClearSearch,
+    required this.onSelectEpisode,
+    required this.scrollController,
+    required this.bottomPadding,
+    required this.horizontalPadding,
+  });
+
+  final List<Episode> episodes;
+  final List<int> visibleEpisodeIndices;
+  final int sourceIndex;
+  final int episodeIndex;
+  final String currentEpisodeLabel;
+  final TextEditingController searchController;
+  final String searchQuery;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onClearSearch;
+  final ValueChanged<int> onSelectEpisode;
+  final ScrollController scrollController;
+  final double bottomPadding;
+  final double horizontalPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            18,
+            horizontalPadding,
+            episodes.length >= 12 ? 12 : 14,
+          ),
+          child: Row(
+            children: [
+              const Text(
+                '剧集',
+                style: TextStyle(color: AppColors.ink, fontSize: 17),
+              ),
+              const SizedBox(width: 8),
+              _EpisodeCountBadge(count: episodes.length),
+              const Spacer(),
+              if (episodes.isNotEmpty)
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const AppVectorIcon(
+                        AppVectorIcons.audioLines,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          currentEpisodeLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.primaryDark,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (episodes.length >= 12)
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              0,
+              horizontalPadding,
+              14,
+            ),
+            child: SizedBox(
+              height: 44,
+              child: AppTextField(
+                controller: searchController,
+                hintText: '搜索剧集',
+                onChanged: onSearchChanged,
+                prefixIcon: const AppVectorIcon(
+                  AppVectorIcons.search,
+                  size: 12,
+                ),
+                suffixIcon: searchQuery.isEmpty
+                    ? null
+                    : Tooltip(
+                        message: '清除搜索',
+                        child: InkWell(
+                          onTap: onClearSearch,
+                          borderRadius: BorderRadius.circular(18),
+                          child: const SizedBox.square(
+                            dimension: 44,
+                            child: Center(
+                              child: AppVectorIcon(AppVectorIcons.x, size: 18),
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        Expanded(
+          child: _EpisodeGrid(
+            episodes: episodes,
+            visibleEpisodeIndices: visibleEpisodeIndices,
+            sourceIndex: sourceIndex,
+            episodeIndex: episodeIndex,
+            onSelectEpisode: onSelectEpisode,
+            scrollController: scrollController,
+            bottomPadding: bottomPadding,
+            horizontalPadding: horizontalPadding,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EpisodeCountBadge extends StatelessWidget {
+  const _EpisodeCountBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 24, minHeight: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
+      ),
+    );
+  }
+}
+
+class _EpisodeGrid extends StatelessWidget {
+  const _EpisodeGrid({
+    required this.episodes,
+    required this.visibleEpisodeIndices,
+    required this.sourceIndex,
+    required this.episodeIndex,
+    required this.onSelectEpisode,
+    required this.scrollController,
+    required this.bottomPadding,
+    required this.horizontalPadding,
+  });
+
+  final List<Episode> episodes;
+  final List<int> visibleEpisodeIndices;
+  final int sourceIndex;
+  final int episodeIndex;
+  final ValueChanged<int> onSelectEpisode;
+  final ScrollController scrollController;
+  final double bottomPadding;
+  final double horizontalPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    if (episodes.isEmpty) {
+      return const _EpisodeEmptyState(
+        icon: AppVectorIcons.library,
+        message: '该播放源暂无剧集',
+      );
+    }
+    if (visibleEpisodeIndices.isEmpty) {
+      return const _EpisodeEmptyState(
+        icon: AppVectorIcons.searchX,
+        message: '没有匹配的剧集',
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var widestLabelUnits = 0.0;
+        for (final index in visibleEpisodeIndices) {
+          final units = episodes[index].label.runes.fold<double>(
+            0,
+            (sum, rune) => sum + (rune <= 0x7F ? 0.58 : 1),
+          );
+          widestLabelUnits = math.max(widestLabelUnits, units);
+        }
+        final availableGridWidth = math.max(
+          1.0,
+          constraints.maxWidth - horizontalPadding * 2,
+        );
+        final scaledFontSize = MediaQuery.textScalerOf(context).scale(12);
+        final preferredTileWidth = (widestLabelUnits * scaledFontSize + 42)
+            .clamp(92.0, 240.0);
+        final columns = ((availableGridWidth + 10) / (preferredTileWidth + 10))
+            .floor()
+            .clamp(1, 8);
+        return GridView.builder(
+          controller: scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            0,
+            horizontalPadding,
+            bottomPadding,
+          ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            mainAxisExtent: 48,
+          ),
+          itemCount: visibleEpisodeIndices.length,
+          itemBuilder: (context, visibleIndex) {
+            final episodeOriginalIndex = visibleEpisodeIndices[visibleIndex];
+            return _EpisodeTile(
+              key: ValueKey(
+                'sheet_episode_${sourceIndex}_$episodeOriginalIndex',
+              ),
+              label: episodes[episodeOriginalIndex].label,
+              selected: episodeIndex == episodeOriginalIndex,
+              onTap: () => onSelectEpisode(episodeOriginalIndex),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _EpisodeEmptyState extends StatelessWidget {
+  const _EpisodeEmptyState({required this.icon, required this.message});
+
+  final AppVectorIconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppVectorIcon(icon, size: 36, color: AppColors.inkMuted),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+          ),
+        ],
       ),
     );
   }

@@ -13,6 +13,7 @@ class MediaKitPlayerValue {
     this.isPlaying = false,
     this.isBuffering = false,
     this.position = Duration.zero,
+    this.buffer = Duration.zero,
     this.duration = Duration.zero,
     this.playbackSpeed = 1,
     this.size = const Size(16, 9),
@@ -22,6 +23,7 @@ class MediaKitPlayerValue {
   final bool isPlaying;
   final bool isBuffering;
   final Duration position;
+  final Duration buffer;
   final Duration duration;
   final double playbackSpeed;
   final Size size;
@@ -31,6 +33,7 @@ class MediaKitPlayerValue {
     bool? isPlaying,
     bool? isBuffering,
     Duration? position,
+    Duration? buffer,
     Duration? duration,
     double? playbackSpeed,
     Size? size,
@@ -40,6 +43,7 @@ class MediaKitPlayerValue {
       isPlaying: isPlaying ?? this.isPlaying,
       isBuffering: isBuffering ?? this.isBuffering,
       position: position ?? this.position,
+      buffer: buffer ?? this.buffer,
       duration: duration ?? this.duration,
       playbackSpeed: playbackSpeed ?? this.playbackSpeed,
       size: size ?? this.size,
@@ -87,6 +91,9 @@ class MediaKitPlayerController extends ValueNotifier<MediaKitPlayerValue> {
         (buffering) => _update(value.copyWith(isBuffering: buffering)),
       ),
       player.stream.position.listen(_handlePosition),
+      player.stream.buffer.listen(
+        (buffer) => _update(value.copyWith(buffer: buffer)),
+      ),
       player.stream.duration.listen(
         (duration) => _update(value.copyWith(duration: duration)),
       ),
@@ -111,6 +118,7 @@ class MediaKitPlayerController extends ValueNotifier<MediaKitPlayerValue> {
         isPlaying: state.playing,
         isBuffering: state.buffering,
         position: state.position,
+        buffer: state.buffer,
         duration: state.duration,
         playbackSpeed: state.rate,
         size: _sizeFrom(state.width, state.height),

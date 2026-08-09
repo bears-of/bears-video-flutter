@@ -1,3 +1,4 @@
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/core/services/video_favorite_repository.dart';
 import 'package:bears_video/features/player/video_detail.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -45,7 +46,9 @@ class _FavoritePageState extends State<FavoritePage> {
               onTap: () => Navigator.of(context).pop(),
               child: const SizedBox.square(
                 dimension: 46,
-                child: Center(child: Icon(Icons.arrow_back_ios_new, size: 18)),
+                child: Center(
+                  child: AppVectorIcon(AppVectorIcons.chevronLeft, size: 24),
+                ),
               ),
             ),
           ),
@@ -74,13 +77,7 @@ class _FavoritePageState extends State<FavoritePage> {
                     ),
                   ),
                   const Center(
-                    child: Text(
-                      '当前还没有收藏过影视剧哦',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: Text('当前还没有收藏过影视剧哦', style: TextStyle(fontSize: 18)),
                   ),
                   const SizedBox(height: 8),
                   const Padding(
@@ -128,14 +125,16 @@ class _FavoritePageState extends State<FavoritePage> {
                           child: favorite.videoPoster.isEmpty
                               ? const ColoredBox(
                                   color: Color(0xFFE8E8E8),
-                                  child: Icon(Icons.movie_outlined),
+                                  child: AppVectorIcon(AppVectorIcons.film),
                                 )
                               : CachedNetworkImage(
                                   imageUrl: favorite.videoPoster,
                                   fit: BoxFit.cover,
                                   errorWidget: (_, _, _) => const ColoredBox(
                                     color: Color(0xFFE8E8E8),
-                                    child: Icon(Icons.broken_image_outlined),
+                                    child: AppVectorIcon(
+                                      AppVectorIcons.imageOff,
+                                    ),
                                   ),
                                 ),
                         ),
@@ -146,13 +145,10 @@ class _FavoritePageState extends State<FavoritePage> {
                           favorite.videoTitle,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: const TextStyle(fontSize: 17),
                         ),
                       ),
-                      const Icon(Icons.chevron_right_rounded),
+                      const AppVectorIcon(AppVectorIcons.chevronRight),
                     ],
                   ),
                 );

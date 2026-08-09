@@ -1,3 +1,4 @@
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/common/widgets/app_bubble_dialog.dart';
 import 'package:bears_video/common/widgets/app_button.dart';
 import 'package:bears_video/core/services/episode_history_repository.dart';
@@ -46,10 +47,10 @@ class _WatchHistoryPageState extends State<WatchHistoryPage> {
   Future<void> _clearHistory() async {
     final confirmed = await showAppConfirmationBubble(
       context: context,
-      title: '清空记录',
-      message: '确定要清空全部的观看历史吗？此操作无法撤销。',
-      cancelLabel: '再想想',
-      confirmLabel: '清空',
+      title: '清空观看历史？',
+      message: '全部观看记录将被永久删除，此操作无法恢复。',
+      cancelLabel: '取消',
+      confirmLabel: '确认清空',
       destructive: true,
     );
     if (!confirmed) return;
@@ -77,7 +78,9 @@ class _WatchHistoryPageState extends State<WatchHistoryPage> {
               onTap: () => Navigator.of(context).pop(),
               child: const SizedBox.square(
                 dimension: 46,
-                child: Center(child: Icon(Icons.arrow_back_ios_new, size: 18)),
+                child: Center(
+                  child: AppVectorIcon(AppVectorIcons.chevronLeft, size: 24),
+                ),
               ),
             ),
           ),
@@ -133,11 +136,7 @@ class _WatchHistoryPageState extends State<WatchHistoryPage> {
                   const Center(
                     child: Text(
                       '当前还没有历史记录哦',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151),
-                      ),
+                      style: TextStyle(fontSize: 18, color: Color(0xFF374151)),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -240,7 +239,7 @@ class _HistoryTile extends StatelessWidget {
                   history.videoPoster.isEmpty
                       ? const ColoredBox(
                           color: Color(0xFFE8E8E8),
-                          child: Icon(Icons.movie_outlined),
+                          child: AppVectorIcon(AppVectorIcons.film),
                         )
                       : CachedNetworkImage(
                           imageUrl: history.videoPoster,
@@ -249,7 +248,7 @@ class _HistoryTile extends StatelessWidget {
                               const ColoredBox(color: Color(0xFFE8E8E8)),
                           errorWidget: (_, _, _) => const ColoredBox(
                             color: Color(0xFFE8E8E8),
-                            child: Icon(Icons.broken_image_outlined),
+                            child: AppVectorIcon(AppVectorIcons.imageOff),
                           ),
                         ),
                   Positioned(

@@ -75,6 +75,7 @@ class _AppButtonState extends State<AppButton> {
     final colors = _resolveColors();
     final height = widget.compact ? 34.0 : 42.0;
     final horizontalPadding = widget.compact ? 10.0 : 16.0;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
     Widget button = Focus(
       onFocusChange: (value) => setState(() => _focused = value),
@@ -98,10 +99,14 @@ class _AppButtonState extends State<AppButton> {
           onTap: _enabled ? _activate : null,
           child: AnimatedScale(
             scale: _pressed ? 0.97 : 1,
-            duration: const Duration(milliseconds: 90),
+            duration: reduceMotion
+                ? Duration.zero
+                : const Duration(milliseconds: 90),
             curve: Curves.easeOutCubic,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 110),
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 110),
               curve: Curves.easeOutCubic,
               constraints: BoxConstraints(minHeight: height),
               padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -124,7 +129,6 @@ class _AppButtonState extends State<AppButton> {
                 style: TextStyle(
                   color: colors.foreground,
                   fontSize: widget.compact ? 13 : 14,
-                  fontWeight: FontWeight.w600,
                 ),
                 child: IconTheme.merge(
                   data: IconThemeData(
@@ -153,10 +157,10 @@ class _AppButtonState extends State<AppButton> {
     switch (widget.variant) {
       case AppButtonVariant.primary:
         return const _AppButtonColors(
-          background: AppColors.primary,
+          background: AppColors.primaryDark,
           pressed: AppColors.primaryPressed,
           foreground: Colors.white,
-          border: AppColors.primary,
+          border: AppColors.primaryDark,
         );
       case AppButtonVariant.secondary:
         return const _AppButtonColors(

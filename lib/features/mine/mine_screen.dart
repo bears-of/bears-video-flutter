@@ -1,4 +1,6 @@
+import 'package:bears_video/common/widgets/app_vector_icon.dart';
 import 'package:bears_video/core/services/episode_history_repository.dart';
+import 'package:bears_video/common/widgets/app_bubble_notice.dart';
 import 'package:bears_video/core/theme/app_colors.dart';
 import 'package:bears_video/core/ui/responsive_layout.dart';
 import 'package:bears_video/features/download/download_history_page.dart';
@@ -34,9 +36,7 @@ class MineScreen extends HookConsumerWidget {
     }
 
     void showPending(String feature) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('$feature功能暂未开放')));
+      showAppBubbleNotice(context, '$feature功能暂未开放');
     }
 
     return SafeArea(
@@ -89,8 +89,10 @@ class MineScreen extends HookConsumerWidget {
                           const ClipboardData(text: 'Bears Video'),
                         );
                         if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('应用名称已复制，可分享给好友')),
+                        showAppBubbleNotice(
+                          context,
+                          '应用名称已复制，可分享给好友',
+                          type: AppBubbleNoticeType.success,
                         );
                       },
                     ),
@@ -138,11 +140,7 @@ class _MineHeader extends StatelessWidget {
       // ),
       child: const Text(
         '我的',
-        style: TextStyle(
-          fontSize: 26,
-          fontWeight: FontWeight.w800,
-          color: AppColors.ink,
-        ),
+        style: TextStyle(fontSize: 26, color: AppColors.ink),
       ),
     );
   }
@@ -232,7 +230,7 @@ class _HistoryPreview extends StatelessWidget {
                     history.videoPoster.isEmpty
                         ? const ColoredBox(
                             color: AppColors.surfaceMuted,
-                            child: Icon(Icons.movie_outlined),
+                            child: AppVectorIcon(AppVectorIcons.film),
                           )
                         : CachedNetworkImage(
                             imageUrl: history.videoPoster,
@@ -241,7 +239,7 @@ class _HistoryPreview extends StatelessWidget {
                                 const ColoredBox(color: AppColors.surfaceMuted),
                             errorWidget: (_, _, _) => const ColoredBox(
                               color: AppColors.surfaceMuted,
-                              child: Icon(Icons.broken_image_outlined),
+                              child: AppVectorIcon(AppVectorIcons.imageOff),
                             ),
                           ),
                     Positioned(
@@ -252,7 +250,6 @@ class _HistoryPreview extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 10,
                           color: Colors.white,
-                          fontWeight: FontWeight.w700,
                           shadows: [Shadow(blurRadius: 4, color: Colors.black)],
                         ),
                       ),
@@ -268,7 +265,6 @@ class _HistoryPreview extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
                 color: Color.fromARGB(255, 107, 107, 107),
               ),
             ),
@@ -290,10 +286,7 @@ class _FeatureSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '常用功能',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-          ),
+          const Text('常用功能', style: TextStyle(fontSize: 16)),
           const SizedBox(height: 8),
           GridView.builder(
             padding: EdgeInsets.zero,
@@ -347,7 +340,7 @@ class _FeatureItem extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 11),
           ),
         ],
       ),
@@ -394,18 +387,16 @@ class _SectionTitle extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-          ),
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 16))),
           const Text(
             '全部',
             style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
           ),
           // const SizedBox(width: 2),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
+          const AppVectorIcon(
+            AppVectorIcons.chevronRight,
+            color: AppColors.inkMuted,
+          ),
         ],
       ),
     );
