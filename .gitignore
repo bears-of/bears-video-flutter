@@ -49,3 +49,4 @@ app.*.map.json
 /.impeccable
 /build
 /docs
+/installer/*.exe
