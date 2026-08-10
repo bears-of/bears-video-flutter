@@ -143,7 +143,8 @@ jobs:
         run: |
           $version = '${{ steps.version.outputs.value }}'
           $makensis = 'C:\Program Files (x86)\NSIS\makensis.exe'
-          & $makensis "/DAPP_VERSION=$version" "/DAPP_VERSION_NUMERIC=$version.0" installer\bears_video.nsi
+          $installerScript = (Resolve-Path 'installer\bears_video.nsi').Path
+          & $makensis "/DAPP_VERSION=$version" "/DAPP_VERSION_NUMERIC=$version.0" $installerScript
           if ($LASTEXITCODE -ne 0) {
             throw "makensis failed with exit code $LASTEXITCODE."
           }

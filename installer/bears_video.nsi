@@ -1,7 +1,7 @@
 ; Build the Windows release bundle before compiling this installer:
 ;   flutter build windows --release -t lib/main_desktop.dart
 ; Then run:
-;   makensis installer\bears_video.nsi
+;   makensis (Resolve-Path installer\bears_video.nsi).Path
 
 Unicode True
 
