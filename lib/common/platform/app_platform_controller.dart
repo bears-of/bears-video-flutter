@@ -7,13 +7,7 @@ abstract interface class AppPlatformController {
 
   Future<void> presentFullScreen(BuildContext context, Route<void> route);
 
-  Future<void> completeFullScreenExit();
-
   Future<void> dismissFullScreen(BuildContext context);
-
-  Future<void> configureFullScreenSurface();
-
-  Future<void> cleanupFullScreenSurface();
 
   Future<void> setPlaybackActive(bool active);
 

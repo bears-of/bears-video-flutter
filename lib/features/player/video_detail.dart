@@ -476,7 +476,6 @@ class VideoDetailPage extends HookConsumerWidget {
     final fullScreenController = useState<MediaKitPlayerController?>(
       videoPlayerController,
     );
-    final fullScreenActive = useState(false);
     final fullScreenControllerVersion = useRef(0);
 
     useEffect(() {
@@ -1105,8 +1104,11 @@ class VideoDetailPage extends HookConsumerWidget {
         }
 
         Future<void> _enterFullScreen(BuildContext context) async {
-          if (fullScreenActive.value) return;
-          fullScreenActive.value = true;
+          final detailRoute = ModalRoute.of(context);
+          if (detailRoute == null || !detailRoute.isCurrent) return;
+          if (!identical(fullScreenController.value, videoPlayerController)) {
+            fullScreenController.value = videoPlayerController;
+          }
           final fullScreenRoute = PageRouteBuilder<void>(
             pageBuilder: (_, __, ___) => FullScreenPlayer(
               controllerListenable: fullScreenController,
@@ -1117,17 +1119,7 @@ class VideoDetailPage extends HookConsumerWidget {
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           );
-          try {
-            await platformController.presentFullScreen(
-              context,
-              fullScreenRoute,
-            );
-          } finally {
-            if (context.mounted) {
-              fullScreenActive.value = false;
-            }
-            await platformController.completeFullScreenExit();
-          }
+          await platformController.presentFullScreen(context, fullScreenRoute);
         }
 
         Widget playerView() {
@@ -1167,15 +1159,17 @@ class VideoDetailPage extends HookConsumerWidget {
           }
           return AnimatedBuilder(
             animation: playerRebuildListenable,
-            child: fullScreenActive.value
-                ? const ColoredBox(color: Colors.black)
-                : RepaintBoundary(
-                    child: Video(
-                      controller: videoPlayerController.videoController,
-                      controls: NoVideoControls,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+            // Keep the inline texture mounted behind the fullscreen route so a
+            // controller created while switching episodes already has a stable
+            // render surface when fullscreen is dismissed.
+            child: RepaintBoundary(
+              child: Video(
+                key: ValueKey(videoPlayerController.videoController),
+                controller: videoPlayerController.videoController,
+                controls: NoVideoControls,
+                fit: BoxFit.contain,
+              ),
+            ),
             builder: (context, child) {
               final controlsMotionDuration =
                   MediaQuery.disableAnimationsOf(context)

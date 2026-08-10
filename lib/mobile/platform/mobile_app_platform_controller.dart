@@ -30,33 +30,28 @@ final class MobileAppPlatformController implements AppPlatformController {
     BuildContext context,
     Route<void> route,
   ) async {
-    await _enterFullScreen();
-    if (!context.mounted) {
-      await cleanupFullScreenSurface();
-      return;
+    final navigator = Navigator.of(context);
+    final enteringFullScreen = _enterFullScreen();
+    final navigation = navigator.push(route);
+    try {
+      await enteringFullScreen;
+      await navigation;
+    } catch (_) {
+      if (navigator.mounted && route.isActive) {
+        navigator.removeRoute(route);
+      }
+      await _exitFullScreen();
+      rethrow;
     }
-    await Navigator.of(context).push(route);
   }
-
-  @override
-  Future<void> completeFullScreenExit() async {}
 
   @override
   Future<void> dismissFullScreen(BuildContext context) async {
+    final navigator = Navigator.of(context);
     await _exitFullScreen();
-    if (context.mounted) {
-      Navigator.of(context).pop();
+    if (navigator.mounted) {
+      navigator.pop();
     }
-  }
-
-  @override
-  Future<void> configureFullScreenSurface() =>
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-  @override
-  Future<void> cleanupFullScreenSurface() async {
-    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
   @override

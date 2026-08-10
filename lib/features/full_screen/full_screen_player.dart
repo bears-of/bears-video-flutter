@@ -533,14 +533,10 @@ class FullScreenPlayer extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final platformController = ref.watch(appPlatformControllerProvider);
     useEffect(() {
-      unawaited(platformController.configureFullScreenSurface());
       VolumeController.instance.showSystemUI = false;
-      return () {
-        unawaited(platformController.cleanupFullScreenSurface());
-      };
-    }, [platformController]);
+      return null;
+    }, const []);
 
     return ValueListenableBuilder<MediaKitPlayerController?>(
       valueListenable: controllerListenable,
@@ -563,7 +559,7 @@ class FullScreenPlayer extends HookConsumerWidget {
 }
 
 class _FullScreenPlayerContent extends HookConsumerWidget {
-  _FullScreenPlayerContent({
+  const _FullScreenPlayerContent({
     required this.controller,
     required this.videoId,
     this.playSources = const [],
@@ -573,7 +569,6 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
   final String? videoTitle;
   final int videoId;
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final MediaKitPlayerController controller;
   final List<PlaySource> playSources; // 播放源列表
 
@@ -1274,6 +1269,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final platformController = ref.watch(appPlatformControllerProvider);
+    final scaffoldKey = useMemoized(() => GlobalKey<ScaffoldState>());
     final controlsVisible = useMemoized(() => ValueNotifier(true));
     final hideTimer = useRef<Timer?>(null);
     final isExitingFullScreen = useRef(false);
@@ -1345,6 +1341,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
     final videoWidget = useMemoized(
       () => RepaintBoundary(
         child: Video(
+          key: ValueKey(controller.videoController),
           controller: controller.videoController,
           controls: NoVideoControls,
           fit: BoxFit.contain,
@@ -1521,7 +1518,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
           }
         },
         child: Scaffold(
-          key: _scaffoldKey,
+          key: scaffoldKey,
           backgroundColor: Colors.black,
           endDrawer: Drawer(
             width: platformController.episodeDrawerWidth(
@@ -2040,7 +2037,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                                             drawerMode.value =
                                                 _FullScreenDrawerMode
                                                     .playbackSpeed;
-                                            _scaffoldKey.currentState
+                                            scaffoldKey.currentState
                                                 ?.openEndDrawer();
                                           },
                                         );
@@ -2056,7 +2053,7 @@ class _FullScreenPlayerContent extends HookConsumerWidget {
                                         onPressed: () {
                                           drawerMode.value =
                                               _FullScreenDrawerMode.episodes;
-                                          _scaffoldKey.currentState
+                                          scaffoldKey.currentState
                                               ?.openEndDrawer();
                                         },
                                       ),

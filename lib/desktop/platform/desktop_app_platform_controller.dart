@@ -16,32 +16,23 @@ final class DesktopAppPlatformController implements AppPlatformController {
     BuildContext context,
     Route<void> route,
   ) async {
-    final navigation = Navigator.of(context).push(route);
+    final navigator = Navigator.of(context);
+    final navigation = navigator.push(route);
     await WidgetsBinding.instance.endOfFrame;
     await windowManager.setFullScreen(true);
     await navigation;
   }
 
   @override
-  Future<void> completeFullScreenExit() async {
-    await WidgetsBinding.instance.endOfFrame;
+  Future<void> dismissFullScreen(BuildContext context) async {
+    final navigator = Navigator.of(context);
     if (await windowManager.isFullScreen()) {
       await windowManager.setFullScreen(false);
     }
-  }
-
-  @override
-  Future<void> dismissFullScreen(BuildContext context) async {
-    if (context.mounted) {
-      Navigator.of(context).pop();
+    if (navigator.mounted) {
+      navigator.pop();
     }
   }
-
-  @override
-  Future<void> configureFullScreenSurface() async {}
-
-  @override
-  Future<void> cleanupFullScreenSurface() async {}
 
   @override
   Future<void> setPlaybackActive(bool active) async {}
