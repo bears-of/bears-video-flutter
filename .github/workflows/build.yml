@@ -1,22 +1,16 @@
-name: Build
+name: Release
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
     tags:
       - "v*"
-  pull_request:
-    branches:
-      - main
 
 permissions:
   contents: read
 
 concurrency:
-  group: build-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
@@ -55,92 +49,43 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
+      - name: Check release version
+        id: version
+        shell: bash
+        run: |
+          app_version="$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)"
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [[ -z "$app_version" || "$tag_version" != "$app_version" ]]; then
+            echo "Tag version ($tag_version) must match pubspec.yaml version ($app_version)." >&2
+            exit 1
+          fi
+          echo "value=$app_version" >> "$GITHUB_OUTPUT"
+
       - name: Check platform imports
         run: dart run tool/check_platform_imports.dart
 
       - name: Build per-ABI APKs
         run: flutter build apk --release --split-per-abi --target lib/main_mobile.dart
 
-      - name: Upload armeabi-v7a APK
+      - name: Stage Android release files
+        shell: bash
+        run: |
+          mkdir -p dist/android
+          version="${{ steps.version.outputs.value }}"
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk "dist/android/BearsVideo-${version}-android-armeabi-v7a.apk"
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk "dist/android/BearsVideo-${version}-android-arm64-v8a.apk"
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk "dist/android/BearsVideo-${version}-android-x86_64.apk"
+
+      - name: Upload Android release files
         uses: actions/upload-artifact@v4
         with:
-          name: android-armeabi-v7a
-          path: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          name: release-android
+          path: dist/android/*.apk
           if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload arm64-v8a APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-arm64-v8a
-          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload x86_64 APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-x86_64
-          path: build/app/outputs/flutter-apk/app-x86_64-release.apk
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Build universal APK
-        run: flutter build apk --release --target lib/main_mobile.dart
-
-      - name: Upload universal APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-universal
-          path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
-          retention-days: 14
-
-  ios:
-    name: iOS (unsigned)
-    runs-on: macos-latest
-    timeout-minutes: 60
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: ${{ env.FLUTTER_CHANNEL }}
-          cache: true
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust build files
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: rust
-
-      - name: Install Flutter dependencies
-        run: flutter pub get
-
-      - name: Check platform imports
-        run: dart run tool/check_platform_imports.dart
-
-      - name: Build unsigned iOS app
-        run: flutter build ios --release --no-codesign --target lib/main_mobile.dart
-
-      - name: Package iOS app
-        run: ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app "$RUNNER_TEMP/bears-video-ios-unsigned.zip"
-
-      - name: Upload iOS app
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-unsigned
-          path: ${{ runner.temp }}/bears-video-ios-unsigned.zip
-          if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
 
   windows:
-    name: Windows x64
+    name: Windows NSIS installer
     runs-on: windows-latest
     timeout-minutes: 60
 
@@ -165,20 +110,74 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
+      - name: Check release version
+        id: version
+        shell: pwsh
+        run: |
+          $versionLine = Select-String -Path pubspec.yaml -Pattern '^version:\s*([^+\s]+)'
+          if (-not $versionLine) {
+            throw 'Could not read the version from pubspec.yaml.'
+          }
+          $appVersion = $versionLine.Matches[0].Groups[1].Value
+          $tagVersion = $env:GITHUB_REF_NAME -replace '^v', ''
+          if ($tagVersion -ne $appVersion) {
+            throw "Tag version ($tagVersion) must match pubspec.yaml version ($appVersion)."
+          }
+          "value=$appVersion" >> $env:GITHUB_OUTPUT
+
       - name: Check platform imports
         run: dart run tool/check_platform_imports.dart
 
       - name: Build Windows app
         run: flutter build windows --release --target lib/main_desktop.dart
 
-      - name: Package Windows app
+      - name: Install NSIS
         shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "$env:RUNNER_TEMP/bears-video-windows-x64.zip"
+        run: |
+          if (-not (Test-Path 'C:\Program Files (x86)\NSIS\makensis.exe')) {
+            choco install nsis --yes --no-progress
+          }
 
-      - name: Upload Windows app
+      - name: Build NSIS installer
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.value }}'
+          $makensis = 'C:\Program Files (x86)\NSIS\makensis.exe'
+          & $makensis "/DAPP_VERSION=$version" "/DAPP_VERSION_NUMERIC=$version.0" installer\bears_video.nsi
+          if ($LASTEXITCODE -ne 0) {
+            throw "makensis failed with exit code $LASTEXITCODE."
+          }
+          New-Item -ItemType Directory -Force -Path dist\windows | Out-Null
+          Move-Item "installer\BearsVideo-$version-windows-x64-setup.exe" dist\windows\
+
+      - name: Upload Windows release file
         uses: actions/upload-artifact@v4
         with:
-          name: windows-x64
-          path: ${{ runner.temp }}/bears-video-windows-x64.zip
+          name: release-windows
+          path: dist/windows/*.exe
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release
+    needs:
+      - android
+      - windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download release files
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          fail_on_unmatched_files: true
+          generate_release_notes: true

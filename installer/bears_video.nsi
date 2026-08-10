@@ -8,7 +8,12 @@ Unicode True
 !include "MUI2.nsh"
 
 !define APP_NAME "Bears Video"
-!define APP_VERSION "1.0.0"
+!ifndef APP_VERSION
+  !define APP_VERSION "1.0.0"
+!endif
+!ifndef APP_VERSION_NUMERIC
+  !define APP_VERSION_NUMERIC "1.0.0.0"
+!endif
 !define APP_PUBLISHER "Bears"
 !define APP_EXE "bears_video.exe"
 !define APP_REG_KEY "Software\BearsVideo"
@@ -31,7 +36,7 @@ SetOverwrite on
 Icon "${APP_ICON}"
 UninstallIcon "${APP_ICON}"
 
-VIProductVersion "1.0.0.0"
+VIProductVersion "${APP_VERSION_NUMERIC}"
 VIAddVersionKey /LANG=1033 "ProductName" "${APP_NAME}"
 VIAddVersionKey /LANG=1033 "ProductVersion" "${APP_VERSION}"
 VIAddVersionKey /LANG=1033 "CompanyName" "${APP_PUBLISHER}"
